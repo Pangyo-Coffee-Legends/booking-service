@@ -46,7 +46,8 @@ jobs:
         port: ${{ secrets.SSH_PORT }}
         source: "target/*.jar"
         target: "~/booking/target/"
-        rm: false
+        strip_components: 1
+        overwrite: true
 
     - name: execute shell script
       uses: appleboy/ssh-action@master
