@@ -46,11 +46,11 @@ public class Booking {
    private Long mbNo;
 
    @OneToOne(fetch = FetchType.EAGER)
-   @JoinColumn(name = "booking_changes_no", referencedColumnName = "booking_changes_no", nullable = true)
+   @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
    private BookingChange bookingChange;
 
    @ManyToOne(fetch = FetchType.EAGER)
-   @JoinColumn(name = "room_no", referencedColumnName = "room_no")
+   @JoinColumn(name = "meeting_room_no", referencedColumnName = "meeting_room_no")
    private MeetingRoom room;
 
    @PrePersist
