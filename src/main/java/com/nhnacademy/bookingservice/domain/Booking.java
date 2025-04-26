@@ -43,33 +43,32 @@ public class Booking {
 
     @Column(name = "mb_no", nullable = false)
     @Comment("예약자번호")
-   private Long mbNo;
+    private Long mbNo;
 
-   @OneToOne(fetch = FetchType.EAGER)
-   @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
-   private BookingChange bookingChange;
+    @Column(name = "room_no", nullable = false)
+    private Long roomNo;
 
-   @ManyToOne(fetch = FetchType.EAGER)
-   @JoinColumn(name = "meeting_room_no", referencedColumnName = "meeting_room_no")
-   private MeetingRoom room;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
+    private BookingChange bookingChange;
 
    @PrePersist
    void prePersist(){
        this.createdAt = LocalDateTime.now();
    }
 
-    private Booking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, MeetingRoom room) {
+    private Booking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
         this.code = code;
         this.date = date;
         this.attendees = attendees;
         this.finishedAt = finishedAt;
         this.mbNo = mbNo;
         this.bookingChange = bookingChange;
-        this.room = room;
+        this.roomNo = roomNo;
     }
 
-    public static Booking ofNewBooking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, MeetingRoom room){
-       return new Booking(code, date, attendees, finishedAt, mbNo, bookingChange, room);
+    public static Booking ofNewBooking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo){
+       return new Booking(code, date, attendees, finishedAt, mbNo, bookingChange, roomNo);
     }
 
     public void update(LocalDateTime date, Integer attendees, LocalDateTime finishedAt){
