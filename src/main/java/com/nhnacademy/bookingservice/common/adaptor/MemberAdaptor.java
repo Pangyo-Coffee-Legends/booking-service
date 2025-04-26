@@ -1,7 +1,6 @@
-package com.nhnacademy.bookingservice.adaptor;
+package com.nhnacademy.bookingservice.common.adaptor;
 
 
-import com.nhnacademy.bookingservice.dto.MeetingRoomResponse;
 import com.nhnacademy.bookingservice.dto.MemberInfoResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +13,4 @@ public interface MemberAdaptor {
     @GetMapping("/info/{mbEmail}")
     ResponseEntity<MemberInfoResponse> getMember(@PathVariable String mbEmail);
 
-//    @GetMapping("/meetings")
-//    ResponseEntity<MeetingRoomResponse> getMeetingRooms();
 }

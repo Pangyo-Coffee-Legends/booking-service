@@ -1,4 +1,4 @@
-package com.nhnacademy.bookingservice.domain;
+package com.nhnacademy.bookingservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

@@ -1,28 +1,30 @@
 package com.nhnacademy.bookingservice.dto;
 
-import lombok.Value;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Value
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookingResponse {
 
-    Long no;
+    private Long no;
 
-    String code;
+    private String code;
 
-    LocalDateTime date;
+    private LocalDateTime date;
 
-    Integer attendees;
+    private Integer attendees;
 
-    LocalDateTime finishedAt;
+    private LocalDateTime finishedAt;
 
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    String mbName;
+    private String mbName;
 
-    String changeName;
+    private String changeName;
 
-    String roomName;
+    private String roomName;
 
 }
