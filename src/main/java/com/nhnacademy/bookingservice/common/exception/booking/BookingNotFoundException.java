@@ -1,8 +1,8 @@
 package com.nhnacademy.bookingservice.common.exception.booking;
 
-import com.nhnacademy.bookingservice.common.exception.CommonHttpException;
 import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 
+@SuppressWarnings("java:S110")
 public class BookingNotFoundException extends NotFoundException {
 
     public BookingNotFoundException() {
