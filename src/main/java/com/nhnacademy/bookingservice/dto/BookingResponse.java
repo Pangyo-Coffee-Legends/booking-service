@@ -21,10 +21,16 @@ public class BookingResponse {
 
     private LocalDateTime createdAt;
 
+    private Long mbNo;
+
+    @Setter
     private String mbName;
 
     private String changeName;
 
+    private Long roomNo;
+
+    @Setter
     private String roomName;
 
 }

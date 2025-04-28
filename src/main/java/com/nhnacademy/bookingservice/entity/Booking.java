@@ -8,7 +8,6 @@ import lombok.ToString;
 import org.hibernate.annotations.Comment;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "bookings")
@@ -22,7 +21,7 @@ public class Booking {
     @Column(name = "booking_no")
     private Long no;
 
-    @Column(name = "booking_code", length = 10, nullable = false)
+    @Column(name = "booking_code", length = 10, nullable = false, unique = true)
     private String code;
 
     @Column(name = "booking_date", nullable = false)
