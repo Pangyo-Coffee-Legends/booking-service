@@ -1,5 +1,8 @@
 package com.nhnacademy.bookingservice.common.advice;
 
+import com.nhnacademy.bookingservice.common.exception.BadRequestException;
+import com.nhnacademy.bookingservice.common.exception.ConflictException;
+import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -20,7 +24,6 @@ public class CommonAdvice {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<CommonErrorResponse> bindExceptionHandler(BindException e, HttpServletRequest request) {
         log.error(e.getMessage(), e);
-//        String referer = httpServletRequest.getHeader("Referer");
 
         List<String> erros = new ArrayList<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
@@ -33,6 +36,38 @@ public class CommonAdvice {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(commonErrorResponse);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<CommonErrorResponse> badRequestExceptionHandler(BadRequestException e, HttpServletRequest request){
+        CommonErrorResponse errorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<CommonErrorResponse> missingRequestHeaderExceptionHandler(MissingRequestHeaderException e, HttpServletRequest request){
+        CommonErrorResponse errorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.UNAUTHORIZED.value(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<CommonErrorResponse> forbiddenExceptionHandler(ForbiddenException e, HttpServletRequest request){
+        CommonErrorResponse errorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.FORBIDDEN.value(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<CommonErrorResponse> notFoundExceptionHandler(NotFoundException e, HttpServletRequest request){
         CommonErrorResponse errorResponse = new CommonErrorResponse(
@@ -42,6 +77,17 @@ public class CommonAdvice {
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<CommonErrorResponse> conflictExceptionHandler(ConflictException e, HttpServletRequest request){
+        CommonErrorResponse errorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(Throwable.class)
