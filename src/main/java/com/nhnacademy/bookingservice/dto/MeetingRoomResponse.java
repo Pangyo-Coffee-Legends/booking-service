@@ -1,11 +1,16 @@
 package com.nhnacademy.bookingservice.dto;
 
-import lombok.Value;
+import lombok.*;
 
-@Value
+@Getter
+@ToString
+@AllArgsConstructor
+@EqualsAndHashCode
 public class MeetingRoomResponse {
 
-    Long no;
+    private final Long no;
 
-    String name;
+    private final String meetingRoomName;
+
+    private final int meetingRoomCapacity;
 }

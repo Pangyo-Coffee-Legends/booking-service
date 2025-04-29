@@ -19,18 +19,19 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_no")
-    private Long no;
+    private Long bookingNo;
 
     @Column(name = "booking_code", length = 10, nullable = false, unique = true)
-    private String code;
+    @Comment("예약코드")
+    private String bookingCode;
 
     @Column(name = "booking_date", nullable = false)
     @Comment("에약일시")
-    private LocalDateTime date;
+    private LocalDateTime bookingDate;
 
     @Column(name = "attendee_count", nullable = false)
     @Comment("예약인원")
-    private Integer attendees;
+    private Integer attendeeCount;
 
     @Column(name = "finished_at", nullable = true)
     @Comment("회의종료시간")
@@ -45,10 +46,12 @@ public class Booking {
     private Long mbNo;
 
     @Column(name = "room_no", nullable = false)
+    @Comment("회의실번호")
     private Long roomNo;
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
+    @Comment("특이사항번호")
     private BookingChange bookingChange;
 
    @PrePersist
@@ -56,10 +59,10 @@ public class Booking {
        this.createdAt = LocalDateTime.now();
    }
 
-    private Booking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
-        this.code = code;
-        this.date = date;
-        this.attendees = attendees;
+    private Booking(String bookingCode, LocalDateTime bookingDate, Integer attendeeCount, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
+        this.bookingCode = bookingCode;
+        this.bookingDate = bookingDate;
+        this.attendeeCount = attendeeCount;
         this.finishedAt = finishedAt;
         this.mbNo = mbNo;
         this.bookingChange = bookingChange;
@@ -71,8 +74,8 @@ public class Booking {
     }
 
     public void update(LocalDateTime date, Integer attendees, LocalDateTime finishedAt){
-       this.date = date;
-       this.attendees = attendees;
+       this.bookingDate = date;
+       this.attendeeCount = attendees;
        this.finishedAt = finishedAt;
     }
 

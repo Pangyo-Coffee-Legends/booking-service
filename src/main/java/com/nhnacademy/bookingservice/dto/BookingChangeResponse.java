@@ -2,19 +2,13 @@ package com.nhnacademy.bookingservice.dto;
 
 import lombok.*;
 
-
 @Getter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class BookingRegisterRequest {
+public class BookingChangeResponse {
 
-    Long roomNo;
+    private Long no;
 
-    String date;
-
-    String time;
-
-    Integer attendeeCount;
+    private Long name;
 }
