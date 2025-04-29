@@ -6,6 +6,7 @@ import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.QBooking;
 import com.nhnacademy.bookingservice.entity.QBookingChange;
 import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
@@ -51,7 +52,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
 
     @Override
-    public Page<BookingResponse> findBookings(Pageable pageable){
+    public Page<BookingResponse> findBookings(Long mbNo, Pageable pageable){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         List<BookingResponse> bookingList = query
@@ -69,6 +70,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                 )
                 .from(qBooking)
                 .leftJoin(qBookingChange).on(qBookingChange.no.eq(qBooking.bookingChange.no))
+                .where(whereExpression(mbNo))
                 .orderBy(qBooking.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -78,6 +80,16 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                                     .from(qBooking);
 
         return PageableExecutionUtils.getPage(bookingList, pageable, count::fetchOne);
+    }
+
+    public BooleanBuilder whereExpression(Long mbNo){
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+
+        if(mbNo != null) {
+            booleanBuilder.and(qBooking.mbNo.eq(mbNo));
+        }
+
+        return booleanBuilder;
     }
 
     @Override

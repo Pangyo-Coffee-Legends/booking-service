@@ -40,10 +40,19 @@ public interface BookingService {
     /**
      * 예약 목록을 페이징 처리하여 조회합니다.
      *
+     * @param memberResponse 예약한 사용자 정보
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getBookings(Pageable pageable);
+    List<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
+
+    /**
+     * 예약 전체 목록을 페이징 처리하여 조회합니다.
+     *
+     * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     */
+    List<BookingResponse> getAllBookings(Pageable pageable);
 
     /**
      * 예약 정보를 수정합니다.
@@ -52,7 +61,7 @@ public interface BookingService {
      * @param request 예약 수정 요청 정보를 담은 객체
      * @return 수정된 예약 정보
      */
-    BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo);
+    BookingResponse updateBooking(Long no, BookingUpdateRequest request);
 
     /**
      * 예약 특이사항(종료, 연장, 취소 등)을 업데이트합니다.

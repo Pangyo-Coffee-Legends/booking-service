@@ -2,6 +2,8 @@ package com.nhnacademy.bookingservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
+import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
+import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.dto.BookingRegisterRequest;
 import com.nhnacademy.bookingservice.dto.BookingResponse;
 import com.nhnacademy.bookingservice.dto.BookingUpdateRequest;
@@ -13,12 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -68,8 +72,25 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 실패 - 헤더가 없는 경우")
+    @DisplayName("예약 실패 - 중복")
     void registerBooking_exception_case() throws Exception {
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        String body = mapper.writeValueAsString(request);
+        doThrow(new AlreadyMeetingRoomTimeException()).when(bookingService).register(request);
+        mockMvc.perform(
+                        post("/api/v1/bookings")
+                                .header("X-USER", "test@test.com")
+                                .content(body)
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isConflict())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("예약 실패 - 헤더가 없는 경우")
+    void registerBooking_exception_case1() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
         doNothing().when(bookingService).register(request);
@@ -84,9 +105,28 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 조회")
+    @DisplayName("예약 실패 - 헤더가 있는 경우")
+    void registerBooking_exception_case2() throws Exception {
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        String body = mapper.writeValueAsString(request);
+
+        when(memberAdaptor.getMember("test@test.com")).thenReturn(ResponseEntity.notFound().build());
+        doNothing().when(bookingService).register(request);
+        mockMvc.perform(
+                        post("/api/v1/bookings")
+                                .header("X-USER", "test@test.com")
+                                .content(body)
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().is4xxClientError())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("예약 조회 - 번호")
     void getBooking() throws Exception {
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"), 1L, "test", null, 1L, "회의실 A");
         when(bookingService.getBooking(Mockito.anyLong(), Mockito.any())).thenReturn(bookingResponse);
         mockMvc.perform(
                         get("/api/v1/bookings/{no}", 1L)
@@ -104,12 +144,76 @@ class BookingControllerTest {
     }
 
     @Test
+    @DisplayName("예약 조회 - forbidden")
+    void getBooking_exception_case() throws Exception {
+        doThrow(new ForbiddenException()).when(bookingService).getBooking(Mockito.anyLong(), Mockito.any());
+        mockMvc.perform(
+                        get("/api/v1/bookings/{no}", 1L)
+                                .header("X-USER", "test@test.com")
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isForbidden())
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("예약 조회 - 사용자별")
+    void getBookingsByMember() throws Exception {
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"), 1L, "test", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-28T11:30:00"), 1L, "test", null, 2L, "회의실 B");
+
+        when(bookingService.getBookingsByMember(Mockito.any(),Mockito.any())).thenReturn(List.of(response1, response2));
+
+        mockMvc.perform(
+                        get("/api/v1/bookings/my")
+                                .header("X-USER", "test@test.com")
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].no").value(1L))
+                .andExpect(jsonPath("$[0].mbNo").value(1L))
+                .andExpect(jsonPath("$[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$[1].no").value(2L))
+                .andExpect(jsonPath("$[1].mbNo").value(1L))
+                .andExpect(jsonPath("$[1].roomName").value("회의실 B"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("예약 조회 - 전체 리스트")
+    void getAllBookings() throws Exception {
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"), 1L, "test", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-28T11:30:00"), 2L, "test2", null, 2L, "회의실 B");
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-30T11:30:00"), 1L, "test", null, 2L, "회의실 B");
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T12:30:00"), 2L, "test2", null, 1L, "회의실 A");
+
+        when(bookingService.getAllBookings(Pageable.ofSize(10))).thenReturn(List.of(response1, response2, response3, response4));
+
+        mockMvc.perform(
+                        get("/api/v1/bookings")
+                                .header("X-USER", "test@test.com")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].no").value(1L))
+                .andExpect(jsonPath("$[0].mbName").value("test"))
+                .andExpect(jsonPath("$[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$[1].no").value(2L))
+                .andExpect(jsonPath("$[1].mbName").value("test2"))
+                .andExpect(jsonPath("$[1].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$[2].no").value(3L))
+                .andExpect(jsonPath("$[2].mbName").value("test"))
+                .andExpect(jsonPath("$[2].roomName").value("회의실 B"))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 9);
         BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "변경", 1L, "회의실 A");
 
-        when(bookingService.updateBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(bookingResponse);
+        when(bookingService.updateBooking(Mockito.anyLong(), Mockito.any())).thenReturn(bookingResponse);
 
         mockMvc.perform(
                 put("/api/v1/bookings/{no}", 1L)

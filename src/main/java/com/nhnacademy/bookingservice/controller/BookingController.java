@@ -2,18 +2,19 @@ package com.nhnacademy.bookingservice.controller;
 
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
-import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Objects;
+import java.util.List;
 
 /**
  * {@code BookingController}는 예약(Booking) 관련 요청을 처리하는 REST 컨트롤러입니다.
@@ -76,17 +77,28 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getBookingsByMember(@PageableDefault(10) Pageable pageable, @ModelAttribute MemberResponse memberInfo){
+        List<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BookingResponse>> getAllBookings(@PageableDefault(10) Pageable pageable){
+        List<BookingResponse> responses = bookingService.getAllBookings(pageable);
+        return ResponseEntity.ok(responses);
+    }
+
     /**
      * 예약 정보를 수정합니다.
      *
      * @param no 예약 번호
      * @param request 수정 요청 정보
-     * @param memberInfo 사용자 정보
      * @return 수정된 예약 정보
      */
     @PutMapping("/{no}")
-    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request, @ModelAttribute MemberResponse memberInfo){
-        BookingResponse response = bookingService.updateBooking(no, request, memberInfo);
+    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request){
+        BookingResponse response = bookingService.updateBooking(no, request);
         return ResponseEntity.ok(response);
     }
 

@@ -1,5 +1,7 @@
 package com.nhnacademy.bookingservice.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 
@@ -10,11 +12,15 @@ import lombok.*;
 @EqualsAndHashCode
 public class BookingRegisterRequest {
 
-    Long roomNo;
+    @NotNull(message = "회의실 번호는 필수입니다.")
+    private Long roomNo;
 
-    String date;
+    @NotBlank(message = "예약 날짜는 비어 있을 수 없습니다.")
+    private String date;
 
-    String time;
+    @NotBlank(message = "예약 시간은 비어 있을 수 없습니다.")
+    private String time;
 
-    Integer attendeeCount;
+    @NotNull(message = "참석 인원 수는 필수입니다.")
+    private Integer attendeeCount;
 }

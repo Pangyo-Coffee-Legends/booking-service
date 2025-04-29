@@ -65,32 +65,36 @@ public class BookingServiceImpl implements BookingService{
 
         checkMember(booking.getMbNo(), memberInfo.getNo());
 
-        ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(booking.getRoomNo());
-        MeetingRoomResponse room = roomEntity.getBody();
-        if(!roomEntity.getStatusCode().is2xxSuccessful()|| room == null){
-            throw new MeetingRoomNotFoundException();
-        }
-        booking.setRoomName(room.getMeetingRoomName());
+        String roomName = getMeetingRoomName(booking.getRoomNo());
+        booking.setRoomName(roomName);
 
         return booking;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<BookingResponse> getBookings(Pageable pageable) {
+    public List<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable) {
         List<BookingResponse> bookingList = new ArrayList<>();
-        bookingRepository.findBookings(pageable).getContent().forEach(booking -> {
-            ResponseEntity<MemberResponse> memberEntity = memberAdaptor.getMemberName(booking.getMbNo());
-            if (!memberEntity.getStatusCode().is2xxSuccessful() || memberEntity.getBody() == null) {
-                throw new MemberNotFoundException(booking.getMbNo());
-            }
-            booking.setMbName(memberEntity.getBody().getName());
+        bookingRepository.findBookings(memberInfo.getNo(), pageable).getContent().forEach(booking -> {
+            booking.setMbName(memberInfo.getName());
 
-            ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(booking.getRoomNo());
-            if (!roomEntity.getStatusCode().is2xxSuccessful() || roomEntity.getBody() == null) {
-                throw new MeetingRoomNotFoundException(booking.getRoomNo());
-            }
-            booking.setRoomName(roomEntity.getBody().getMeetingRoomName());
+            String roomName = getMeetingRoomName(booking.getRoomNo());
+            booking.setRoomName(roomName);
+
+            bookingList.add(booking);
+        });
+        return bookingList;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings(Pageable pageable) {
+        List<BookingResponse> bookingList = new ArrayList<>();
+        bookingRepository.findBookings(null, pageable).getContent().forEach(booking -> {
+            String mbName = getMemberName(booking.getMbNo());
+            booking.setMbName(mbName);
+
+            String roomName = getMeetingRoomName(booking.getRoomNo());
+            booking.setRoomName(roomName);
 
             bookingList.add(booking);
         });
@@ -99,16 +103,13 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
-    public BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo){
+    public BookingResponse updateBooking(Long no, BookingUpdateRequest request){
         Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
 
-        checkMember(booking.getMbNo(), memberInfo.getNo());
+        checkMember(booking.getMbNo(), MemberThreadLocal.getMemberNo());
 
-        ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(booking.getRoomNo());
-        MeetingRoomResponse room = roomEntity.getBody();
-        if(!roomEntity.getStatusCode().is2xxSuccessful()|| room == null){
-            throw new MeetingRoomNotFoundException();
-        }
+        String mbName = getMemberName(booking.getMbNo());
+        String roomName = getMeetingRoomName(booking.getRoomNo());
 
         LocalDate date = LocalDate.parse(request.getDate());
         LocalTime time = LocalTime.parse(request.getTime());
@@ -118,7 +119,7 @@ public class BookingServiceImpl implements BookingService{
         BookingChange change = bookingChangeRepository.findByName("변경");
         booking.updateBookingEvent(change);
 
-        return convertBookingResponse(booking, null, room.getMeetingRoomName());
+        return convertBookingResponse(booking, mbName, roomName);
     }
 
     // todo change [이름, 식별번호] 선택
@@ -161,5 +162,25 @@ public class BookingServiceImpl implements BookingService{
         if(!Objects.equals(bookingMbNo, loginMbNo)){
             throw new ForbiddenException();
         }
+    }
+
+    private String getMeetingRoomName(Long roomNo){
+        ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(roomNo);
+        MeetingRoomResponse room = roomEntity.getBody();
+        if(!roomEntity.getStatusCode().is2xxSuccessful()|| room == null){
+            throw new MeetingRoomNotFoundException();
+        }
+
+        return room.getMeetingRoomName();
+    }
+
+    private String getMemberName(Long mbNo) {
+        ResponseEntity<MemberResponse> memberEntity = memberAdaptor.getMemberName(mbNo);
+        MemberResponse member = memberEntity.getBody();
+        if (!memberEntity.getStatusCode().is2xxSuccessful() || member == null) {
+            throw new MemberNotFoundException(mbNo);
+        }
+
+        return member.getName();
     }
 }
