@@ -113,11 +113,13 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date) {
         return bookingRepository.findBookingsByDate(roomNo, date);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingResponse updateBooking(Long no, BookingUpdateRequest request){
         Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
 

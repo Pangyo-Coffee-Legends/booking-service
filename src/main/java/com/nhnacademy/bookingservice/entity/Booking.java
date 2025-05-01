@@ -82,4 +82,8 @@ public class Booking {
     public void updateBookingEvent(BookingChange bookingChange){
        this.bookingChange = bookingChange;
     }
+
+    public void updateFinishedAt(LocalDateTime finishedAt){
+       this.finishedAt = finishedAt;
+    }
 }

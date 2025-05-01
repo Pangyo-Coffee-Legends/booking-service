@@ -10,7 +10,7 @@ public class BookingNotFoundException extends NotFoundException {
     }
 
     public BookingNotFoundException(Long no) {
-        super("예약을 찾을 수 없습니다. (id : %d)".formatted(no));
+        super("예약을 찾을 수 없습니다(%d)".formatted(no));
     }
 
     public BookingNotFoundException(String name) {

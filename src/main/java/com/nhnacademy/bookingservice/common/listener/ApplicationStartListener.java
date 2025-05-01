@@ -1,6 +1,5 @@
-package com.nhnacademy.bookingservice.common.listner;
+package com.nhnacademy.bookingservice.common.listener;
 
-import com.nhnacademy.bookingservice.dto.BookingRegisterRequest;
 import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.BookingChange;
 import com.nhnacademy.bookingservice.repository.BookingChangeRepository;
