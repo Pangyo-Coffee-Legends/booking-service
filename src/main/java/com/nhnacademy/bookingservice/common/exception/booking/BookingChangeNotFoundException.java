@@ -6,14 +6,10 @@ import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 public class BookingChangeNotFoundException extends NotFoundException {
 
     public BookingChangeNotFoundException(){
-        super("해당 변경 내용을 찾을 수 없습니다.");
+        super("해당 특이사항을 찾을 수 없습니다.");
     }
 
     public BookingChangeNotFoundException(Long no){
-        super("해당 변경 내용을 찾을 수 없습니다. [id: %s]".formatted(no));
-    }
-
-    public BookingChangeNotFoundException(String name){
-        super("해당 변경 내용을 찾을 수 없습니다. [name: %s]".formatted(name));
+        super("해당 특이사항(%s)을 찾을 수 없습니다.".formatted(no));
     }
 }
