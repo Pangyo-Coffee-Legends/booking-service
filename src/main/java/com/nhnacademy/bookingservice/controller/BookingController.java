@@ -7,13 +7,16 @@ import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -59,9 +62,9 @@ public class BookingController {
      * @return 201 Created 응답
      */
     @PostMapping
-    public ResponseEntity<BookingResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request){
-        bookingService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<BookingRegisterResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request){
+        BookingRegisterResponse response = bookingService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -72,20 +75,26 @@ public class BookingController {
      * @return 예약 상세 정보
      */
     @GetMapping("/{no}")
-    public ResponseEntity<BookingResponse> getBooking(@PathVariable("no") Long no, @ModelAttribute MemberResponse memberInfo) {
+    public ResponseEntity<BookingResponse> getBooking(@PathVariable("no") Long no, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
         BookingResponse response = bookingService.getBooking(no, memberInfo);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getBookingsByMember(@PageableDefault(10) Pageable pageable, @ModelAttribute MemberResponse memberInfo){
-        List<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
+    public ResponseEntity<Page<BookingResponse>> getBookingsByMember(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        Page<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingResponse>> getAllBookings(@PageableDefault(10) Pageable pageable){
-        List<BookingResponse> responses = bookingService.getAllBookings(pageable);
+    public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable){
+        Page<BookingResponse> responses = bookingService.getAllBookings(pageable);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/meeting-rooms/{roomNo}/date/{date}")
+    public ResponseEntity<List<DailyBookingResponse>> getDailyBookings(@PathVariable("roomNo")Long roomNo, @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        List<DailyBookingResponse> responses = bookingService.getDailyBookings(roomNo, date);
         return ResponseEntity.ok(responses);
     }
 
@@ -103,15 +112,26 @@ public class BookingController {
     }
 
     /**
-     * 예약의 특이사항을 변경합니다.
+     * 예약을 연장 합니다.
      *
      * @param bookingNo 예약 번호
-     * @param changeNo 특이사항 번호
      * @return 200 OK 응답
      */
-    @PutMapping("/{no}/changes/{change-no}")
-    public ResponseEntity<Void> updateBookingChange(@PathVariable("no") Long bookingNo, @PathVariable("change-no") Long changeNo) {
-        bookingService.updateBookingChange(bookingNo, changeNo);
+    @PutMapping("/{no}/extend")
+    public ResponseEntity<Void> extendBooking(@PathVariable("no") Long bookingNo) {
+        bookingService.extendBooking(bookingNo);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 예약을 종료 합니다.
+     *
+     * @param bookingNo 예약 번호
+     * @return 200 OK 응답
+     */
+    @PutMapping("/{no}/finish")
+    public ResponseEntity<Void> finishBooking(@PathVariable("no") Long bookingNo) {
+        bookingService.finishBooking(bookingNo);
         return ResponseEntity.ok().build();
     }
 
@@ -123,7 +143,7 @@ public class BookingController {
      * @return 204 No Content 응답
      */
     @DeleteMapping("/{no}")
-    public ResponseEntity<BookingResponse> deleteBooking(@PathVariable("no") Long no, @ModelAttribute MemberResponse memberInfo){
+    public ResponseEntity<BookingResponse> deleteBooking(@PathVariable("no") Long no, @ModelAttribute("memberInfo") MemberResponse memberInfo){
         bookingService.cancelBooking(no, memberInfo);
         return ResponseEntity.noContent().build();
     }

@@ -7,15 +7,18 @@ import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
+import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.BookingChange;
 import com.nhnacademy.bookingservice.dto.*;
+import com.nhnacademy.bookingservice.entity.BookingChangeType;
 import com.nhnacademy.bookingservice.repository.BookingChangeRepository;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -41,7 +43,13 @@ public class BookingServiceImpl implements BookingService{
     private final MemberAdaptor memberAdaptor;
 
     @Override
-    public void register(BookingRegisterRequest request) {
+    public BookingRegisterResponse register(BookingRegisterRequest request) {
+
+        MeetingRoomResponse room = getMeetingRoom(request.getRoomNo());
+
+        if(room.getMeetingRoomCapacity() < request.getAttendeeCount()) {
+            throw new MeetingRoomCapacityExceededException(room.getMeetingRoomCapacity());
+        }
 
         String code = UUID.randomUUID().toString().split("-")[0];
 
@@ -55,51 +63,58 @@ public class BookingServiceImpl implements BookingService{
 
         Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), MemberThreadLocal.getMemberNo(), null, request.getRoomNo());
         bookingRepository.save(booking);
+
+        return new BookingRegisterResponse(booking.getBookingNo());
     }
 
     @Override
     @Transactional(readOnly = true)
     public BookingResponse getBooking(Long no, MemberResponse memberInfo) {
-        BookingResponse booking = bookingRepository.findByNo(no);
+        BookingResponse booking = bookingRepository.findByNo(no).orElseThrow(BookingNotFoundException::new);
         booking.setMbName(memberInfo.getName());
 
         checkMember(booking.getMbNo(), memberInfo.getNo());
 
-        String roomName = getMeetingRoomName(booking.getRoomNo());
-        booking.setRoomName(roomName);
+        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+        booking.setRoomName(room.getMeetingRoomName());
 
         return booking;
     }
 
     @Override
-    public List<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable) {
-        List<BookingResponse> bookingList = new ArrayList<>();
-        bookingRepository.findBookings(memberInfo.getNo(), pageable).getContent().forEach(booking -> {
+    public Page<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable) {
+        Page<BookingResponse> bookings = bookingRepository.findBookings(memberInfo.getNo(), pageable);
+
+        bookings.forEach(booking -> {
             booking.setMbName(memberInfo.getName());
 
-            String roomName = getMeetingRoomName(booking.getRoomNo());
-            booking.setRoomName(roomName);
-
-            bookingList.add(booking);
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+            booking.setRoomName(room.getMeetingRoomName());
         });
-        return bookingList;
+
+        return bookings;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getAllBookings(Pageable pageable) {
-        List<BookingResponse> bookingList = new ArrayList<>();
-        bookingRepository.findBookings(null, pageable).getContent().forEach(booking -> {
+    public Page<BookingResponse> getAllBookings(Pageable pageable) {
+
+        Page<BookingResponse> bookings = bookingRepository.findBookings(null, pageable);
+
+        bookings.forEach(booking -> {
             String mbName = getMemberName(booking.getMbNo());
             booking.setMbName(mbName);
 
-            String roomName = getMeetingRoomName(booking.getRoomNo());
-            booking.setRoomName(roomName);
-
-            bookingList.add(booking);
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+            booking.setRoomName(room.getMeetingRoomName());
         });
 
-        return bookingList;
+        return bookings;
+    }
+
+    @Override
+    public List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date) {
+        return bookingRepository.findBookingsByDate(roomNo, date);
     }
 
     @Override
@@ -109,35 +124,56 @@ public class BookingServiceImpl implements BookingService{
         checkMember(booking.getMbNo(), MemberThreadLocal.getMemberNo());
 
         String mbName = getMemberName(booking.getMbNo());
-        String roomName = getMeetingRoomName(booking.getRoomNo());
+        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
 
         LocalDate date = LocalDate.parse(request.getDate());
         LocalTime time = LocalTime.parse(request.getTime());
         LocalDateTime dateTime = LocalDateTime.of(date, time);
         booking.update(dateTime, request.getAttendeeCount(), dateTime.plusHours(1));
 
-        BookingChange change = bookingChangeRepository.findByName("변경");
+        BookingChange change = bookingChangeRepository.findById(BookingChangeType.CHANGE.getId())
+                .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CHANGE.getId()));
         booking.updateBookingEvent(change);
 
-        return convertBookingResponse(booking, mbName, roomName);
+        return convertBookingResponse(booking, mbName, room.getMeetingRoomName());
     }
 
-    // todo change [이름, 식별번호] 선택
-    public void updateBookingChange(Long no, Long changeNo){
-        Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
+    @Override
+    public void extendBooking(Long no){
+        Booking booking = bookingRepository.findById(no)
+                .orElseThrow(() -> new BookingNotFoundException(no));
 
-        BookingChange change = bookingChangeRepository.findById(changeNo).orElseThrow(() -> new BookingChangeNotFoundException(no));
-//        BookingChange change = bookingChangeRepository.findByName(name);
+        BookingChange change = bookingChangeRepository.findById(BookingChangeType.EXTEND.getId())
+                .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.EXTEND.getId()));
+
         booking.updateBookingEvent(change);
+        booking.updateFinishedAt(booking.getFinishedAt().plusMinutes(30));
+
+    }
+
+    @Override
+    public void finishBooking(Long no) {
+        Booking booking = bookingRepository.findById(no)
+                .orElseThrow(() -> new BookingNotFoundException(no));
+
+        BookingChange change = bookingChangeRepository.findById(BookingChangeType.FINISH.getId())
+                .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.FINISH.getId()));
+
+        booking.updateBookingEvent(change);
+
     }
 
     @Override
     public void cancelBooking(Long no, MemberResponse memberInfo){
-        Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
+        Booking booking = bookingRepository.findById(no)
+                .orElseThrow(() -> new BookingNotFoundException(no));
         checkMember(booking.getMbNo(), memberInfo.getNo());
 
-        BookingChange change = bookingChangeRepository.findByName("취소");
+        BookingChange change = bookingChangeRepository.findById(BookingChangeType.CANCEL.getId())
+                .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CANCEL.getId()));
+
         booking.updateBookingEvent(change);
+        booking.updateFinishedAt(null);
 
         // 언제 취소 됐는지 있어야할 듯
     }
@@ -164,14 +200,14 @@ public class BookingServiceImpl implements BookingService{
         }
     }
 
-    private String getMeetingRoomName(Long roomNo){
+    private MeetingRoomResponse getMeetingRoom(Long roomNo){
         ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(roomNo);
         MeetingRoomResponse room = roomEntity.getBody();
         if(!roomEntity.getStatusCode().is2xxSuccessful()|| room == null){
             throw new MeetingRoomNotFoundException();
         }
 
-        return room.getMeetingRoomName();
+        return room;
     }
 
     private String getMemberName(Long mbNo) {

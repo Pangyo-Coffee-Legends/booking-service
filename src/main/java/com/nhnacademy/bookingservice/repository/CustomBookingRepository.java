@@ -1,10 +1,14 @@
 package com.nhnacademy.bookingservice.repository;
 
 import com.nhnacademy.bookingservice.dto.BookingResponse;
+import com.nhnacademy.bookingservice.dto.DailyBookingResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Booking 엔티티에 대한 커스텀 조회 기능을 정의하는 인터페이스입니다.
@@ -24,7 +28,7 @@ public interface CustomBookingRepository {
      * @param no 예약 번호
      * @return 조회된 예약 정보 (BookingResponse)
      */
-    BookingResponse findByNo(Long no);
+    Optional<BookingResponse> findByNo(Long no);
 
     /**
      * 페이징(Pageable) 조건에 맞는 예약 목록을 조회합니다.
@@ -37,6 +41,15 @@ public interface CustomBookingRepository {
      * @return 예약 목록이 포함된 Page 객체
      */
     Page<BookingResponse> findBookings(Long attendeeNo, Pageable pageable);
+
+    /**
+     * 회의실 번호(roomNo)와 날짜(date)를 기반으로 예약 정보를 조회합니다.
+     *
+     * @param roomNo 선택한 회의실 번호
+     * @param date 선택한 예약 날짜
+     * @return 조회된 예약 정보 (DailyBookingResponse)
+     */
+    List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date);
 
     /**
      * 주어진 회의실 번호와 예약 일자에 예약이 존재하는지 여부를 확인합니다.

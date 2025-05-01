@@ -1,11 +1,10 @@
 package com.nhnacademy.bookingservice.service;
 
-import com.nhnacademy.bookingservice.dto.BookingRegisterRequest;
-import com.nhnacademy.bookingservice.dto.BookingResponse;
-import com.nhnacademy.bookingservice.dto.BookingUpdateRequest;
-import com.nhnacademy.bookingservice.dto.MemberResponse;
+import com.nhnacademy.bookingservice.dto.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -26,7 +25,7 @@ public interface BookingService {
      *
      * @param bookingRegisterRequest 예약 등록 요청 정보를 담은 객체
      */
-    void register(BookingRegisterRequest bookingRegisterRequest);
+    BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest);
 
     /**
      * 예약 번호와 회원 정보를 기반으로 예약 정보를 조회합니다.
@@ -44,7 +43,7 @@ public interface BookingService {
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
+    Page<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
@@ -52,8 +51,9 @@ public interface BookingService {
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getAllBookings(Pageable pageable);
+    Page<BookingResponse> getAllBookings(Pageable pageable);
 
+    List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date);
     /**
      * 예약 정보를 수정합니다.
      *
@@ -64,12 +64,18 @@ public interface BookingService {
     BookingResponse updateBooking(Long no, BookingUpdateRequest request);
 
     /**
-     * 예약 특이사항(종료, 연장, 취소 등)을 업데이트합니다.
+     * 예약을 연장 합니다.
      *
      * @param bookingNo 예약 번호
-     * @param changeNo 예약 특이사항 번호
      */
-    void updateBookingChange(Long bookingNo, Long changeNo);
+    void extendBooking(Long bookingNo);
+
+    /**
+     * 예약을 종료 합니다.
+     *
+     * @param bookingNo 예약 번호
+     */
+    void finishBooking(Long bookingNo);
 
     /**
      * 예약을 취소합니다.

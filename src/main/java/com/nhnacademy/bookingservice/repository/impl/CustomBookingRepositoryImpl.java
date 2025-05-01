@@ -1,12 +1,15 @@
 package com.nhnacademy.bookingservice.repository.impl;
 
 import com.nhnacademy.bookingservice.dto.BookingResponse;
+import com.nhnacademy.bookingservice.dto.DailyBookingResponse;
 import com.nhnacademy.bookingservice.dto.QBookingResponse;
 import com.nhnacademy.bookingservice.entity.Booking;
+import com.nhnacademy.bookingservice.entity.BookingChangeType;
 import com.nhnacademy.bookingservice.entity.QBooking;
 import com.nhnacademy.bookingservice.entity.QBookingChange;
 import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
@@ -14,8 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.data.support.PageableExecutionUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport implements CustomBookingRepository {
 
@@ -27,10 +32,10 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     QBookingChange qBookingChange = QBookingChange.bookingChange;
 
     @Override
-    public BookingResponse findByNo(Long no){
+    public Optional<BookingResponse> findByNo(Long no){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        return query
+        return Optional.ofNullable(query
                 .select(new QBookingResponse(
                             qBooking.bookingNo,
                             qBooking.bookingCode,
@@ -44,10 +49,10 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                         )
                 )
                 .from(qBooking)
-                .leftJoin(qBookingChange).on(qBookingChange.no.eq(qBooking.bookingChange.no))
+                .leftJoin(qBooking.bookingChange, qBookingChange)
                 .where(qBooking.bookingNo.eq(no))
                 .orderBy(qBooking.createdAt.desc())
-                .fetchOne();
+                .fetchOne());
     }
 
 
@@ -69,7 +74,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                         )
                 )
                 .from(qBooking)
-                .leftJoin(qBookingChange).on(qBookingChange.no.eq(qBooking.bookingChange.no))
+                .leftJoin(qBooking.bookingChange, qBookingChange)
                 .where(whereExpression(mbNo))
                 .orderBy(qBooking.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -90,6 +95,29 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
         }
 
         return booleanBuilder;
+    }
+
+    public List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date){
+        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+        return query
+                .select(Projections.fields(
+                                DailyBookingResponse.class,
+                                qBooking.bookingNo.as("no"),
+                                qBooking.bookingDate.as("date"),
+                                qBooking.finishedAt
+                        )
+                )
+                .from(qBooking)
+                .leftJoin(qBooking.bookingChange, qBookingChange)
+                .where(qBooking.roomNo.eq(roomNo),
+                        qBooking.bookingChange.isNull().or(qBooking.bookingChange.no.ne(BookingChangeType.CANCEL.getId())),
+                        qBooking.bookingDate.goe(start).and(qBooking.bookingDate.lt(end))
+                )
+                .fetch();
     }
 
     @Override
