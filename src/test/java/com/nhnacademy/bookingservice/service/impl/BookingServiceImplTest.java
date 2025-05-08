@@ -2,7 +2,6 @@ package com.nhnacademy.bookingservice.service.impl;
 
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
@@ -58,21 +57,14 @@ class BookingServiceImplTest {
     BookingResponse bookingResponse;
     @BeforeEach
     void setUp() {
-        MemberThreadLocal.setMemberNoLocal(1L);
-
         memberInfo = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111", "ROLE_USER");
         meetingRoomResponse = new MeetingRoomResponse(1L, "회의실 A", 5);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
 
-        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
 
-    }
-
-    @AfterEach
-    void tearDown() {
-        MemberThreadLocal.removeMemberNo();
     }
 
     @Test
@@ -83,7 +75,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(ResponseEntity.ok(roomResponse));
         when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(false);
 
-        bookingService.register(request);
+        bookingService.register(request, memberInfo);
 
         verify(bookingRepository, Mockito.times(1)).save(Mockito.any(Booking.class));
     }
@@ -95,7 +87,7 @@ class BookingServiceImplTest {
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(ResponseEntity.ok(roomResponse));
-        Assertions.assertThrows(MeetingRoomCapacityExceededException.class, () -> bookingService.register(request));
+        Assertions.assertThrows(MeetingRoomCapacityExceededException.class, () -> bookingService.register(request, memberInfo));
 
         verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
@@ -109,7 +101,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(ResponseEntity.ok(roomResponse));
         when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
 
-        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request));
+        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
         verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
@@ -123,7 +115,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(ResponseEntity.ok(roomResponse));
         when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
 
-        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request));
+        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
         verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
@@ -286,7 +278,6 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정")
     void updateBooking() {
-        MemberThreadLocal.setMemberNoLocal(1L);
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
@@ -309,7 +300,6 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정 - not found")
     void updateBooking_exception_case() {
-        MemberThreadLocal.setMemberNoLocal(1L);
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);

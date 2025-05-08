@@ -62,7 +62,7 @@ class BookingControllerTest {
         String body = mapper.writeValueAsString(request);
 
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(bookingService.register(request)).thenReturn(response);
+        when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                 post("/api/v1/bookings")
                         .header("X-USER", "test@test.com")
@@ -80,7 +80,7 @@ class BookingControllerTest {
     void registerBooking_exception_case1() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
-        doThrow(AlreadyMeetingRoomTimeException.class).when(bookingService).register(request);
+        doThrow(AlreadyMeetingRoomTimeException.class).when(bookingService).register(request, member);
         mockMvc.perform(
                         post("/api/v1/bookings")
                                 .header("X-USER", "test@test.com")
@@ -97,7 +97,7 @@ class BookingControllerTest {
     void registerBooking_exception_case2() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
-        doThrow(MeetingRoomCapacityExceededException.class).when(bookingService).register(request);
+        doThrow(MeetingRoomCapacityExceededException.class).when(bookingService).register(request, member);
         mockMvc.perform(
                         post("/api/v1/bookings")
                                 .header("X-USER", "test@test.com")
@@ -115,7 +115,7 @@ class BookingControllerTest {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(bookingService.register(request)).thenReturn(response);
+        when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                         post("/api/v1/bookings")
                                 .content(body)
@@ -133,7 +133,7 @@ class BookingControllerTest {
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
         when(memberAdaptor.getMember("test@test.com")).thenReturn(ResponseEntity.notFound().build());
-        when(bookingService.register(request)).thenReturn(response);
+        when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                         post("/api/v1/bookings")
                                 .header("X-USER", "test@test.com")
@@ -148,7 +148,7 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회 - 번호")
     void getBooking() throws Exception {
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", null,null, 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), 1L, "test", null,null, 1L, "회의실 A");
         when(bookingService.getBooking(Mockito.anyLong(), Mockito.any())).thenReturn(bookingResponse);
         mockMvc.perform(
                         get("/api/v1/bookings/{no}", 1L)
@@ -197,8 +197,8 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(리스트) - 사용자별")
     void getBookingsByMember_list() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", null, null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), 1L, "test", null, null, 2L, "회의실 B");
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
 
         when(bookingService.getBookingsByMember(Mockito.any())).thenReturn(List.of(response1, response2));
 
@@ -220,10 +220,10 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(리스트) - 전체")
     void getAllBookings_list() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
         when(bookingService.getAllBookings()).thenReturn(List.of(response1, response2, response3, response4));
 
@@ -247,8 +247,8 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(페이징) - 사용자별")
     void getBookingsByMember() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", null, null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), 1L, "test", null, null, 2L, "회의실 B");
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
 
         when(bookingService.getBookingsByMember(Mockito.any(),Mockito.any())).thenReturn(new PageImpl<>(List.of(response1, response2)));
 
@@ -270,10 +270,10 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(페이징) - 전체")
     void getAllBookings() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
         when(bookingService.getAllBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
 
@@ -322,7 +322,7 @@ class BookingControllerTest {
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 9, 1L);
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), 1L, "test", null, "변경", 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, "변경", 1L, "회의실 A");
 
         when(bookingService.updateBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(bookingResponse);
 

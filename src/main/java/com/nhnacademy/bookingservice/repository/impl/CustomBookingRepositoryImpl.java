@@ -39,6 +39,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                         qBooking.bookingDate,
                         qBooking.attendeeCount,
                         qBooking.finishedAt,
+                        qBooking.createdAt,
                         qBooking.mbNo,
                         qBooking.bookingChange.name.as("changeName"),
                         qBooking.roomNo
@@ -94,6 +95,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
         return booleanBuilder;
     }
 
+    @Override
     public List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 

@@ -2,7 +2,6 @@ package com.nhnacademy.bookingservice.service.impl;
 
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
@@ -43,7 +42,7 @@ public class BookingServiceImpl implements BookingService{
     private final MemberAdaptor memberAdaptor;
 
     @Override
-    public BookingRegisterResponse register(BookingRegisterRequest request) {
+    public BookingRegisterResponse register(BookingRegisterRequest request, MemberResponse memberInfo) {
 
         MeetingRoomResponse room = getMeetingRoom(request.getRoomNo());
 
@@ -61,7 +60,7 @@ public class BookingServiceImpl implements BookingService{
             throw new AlreadyMeetingRoomTimeException(dateTime);
         }
 
-        Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), MemberThreadLocal.getMemberNo(), null, request.getRoomNo());
+        Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), memberInfo.getNo(), null, request.getRoomNo());
         bookingRepository.save(booking);
 
         return new BookingRegisterResponse(booking.getBookingNo());
@@ -152,7 +151,7 @@ public class BookingServiceImpl implements BookingService{
     public BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo){
         Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
 
-        checkMember(booking.getMbNo(), MemberThreadLocal.getMemberNo());
+        checkMember(booking.getMbNo(), memberInfo.getNo());
 
         MeetingRoomResponse room = getMeetingRoom(request.getRoomNo());
 
@@ -216,6 +215,7 @@ public class BookingServiceImpl implements BookingService{
                 booking.getBookingDate(),
                 booking.getAttendeeCount(),
                 booking.getFinishedAt(),
+                booking.getCreatedAt(),
                 booking.getMbNo(),
                 mbName,
                 null,

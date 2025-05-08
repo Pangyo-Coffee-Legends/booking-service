@@ -25,7 +25,7 @@ public interface BookingService {
      *
      * @param bookingRegisterRequest 예약 등록 요청 정보를 담은 객체
      */
-    BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest);
+    BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest, MemberResponse memberInfo);
 
     /**
      * 예약 번호와 회원 정보를 기반으로 예약 정보를 조회합니다.

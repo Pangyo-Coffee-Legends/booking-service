@@ -1,7 +1,6 @@
 package com.nhnacademy.bookingservice.controller;
 
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
 import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * {@code BookingController}는 예약(Booking) 관련 요청을 처리하는 REST 컨트롤러입니다.
@@ -51,7 +51,6 @@ public class BookingController {
         if (!responseEntity.getStatusCode().is2xxSuccessful() || responseEntity.getBody() == null) {
             throw new MemberNotFoundException();
         }
-        MemberThreadLocal.setMemberNoLocal(responseEntity.getBody().getNo());
         return responseEntity.getBody();
     }
 
@@ -62,8 +61,8 @@ public class BookingController {
      * @return 201 Created 응답
      */
     @PostMapping
-    public ResponseEntity<BookingRegisterResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request){
-        BookingRegisterResponse response = bookingService.register(request);
+    public ResponseEntity<BookingRegisterResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        BookingRegisterResponse response = bookingService.register(request, memberInfo);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -99,7 +98,10 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable){
+    public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         Page<BookingResponse> responses = bookingService.getAllBookings(pageable);
         return ResponseEntity.ok(responses);
     }
