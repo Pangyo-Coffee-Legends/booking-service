@@ -58,7 +58,7 @@ public class BookingServiceImpl implements BookingService{
         LocalDateTime dateTime = LocalDateTime.of(date, time);
 
         if(bookingRepository.existsRoomNoAndDate(request.getRoomNo(), dateTime)) {
-            throw new AlreadyMeetingRoomTimeException();
+            throw new AlreadyMeetingRoomTimeException(dateTime);
         }
 
         Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), MemberThreadLocal.getMemberNo(), null, request.getRoomNo());
@@ -82,6 +82,35 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
+    public List<BookingResponse> getBookingsByMember(MemberResponse memberInfo) {
+        List<BookingResponse> bookings = bookingRepository.findBookingList(memberInfo.getNo());
+
+        bookings.forEach(booking -> {
+            booking.setMbName(memberInfo.getName());
+
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+            booking.setRoomName(room.getMeetingRoomName());
+        });
+        return bookings;
+    }
+
+    @Override
+    public List<BookingResponse> getAllBookings() {
+        List<BookingResponse> bookings = bookingRepository.findBookingList(null);
+
+        bookings.forEach(booking -> {
+            MemberResponse member = getMember(booking.getMbNo());
+            booking.setMbName(member.getName());
+            booking.setEmail(member.getEmail());
+
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+            booking.setRoomName(room.getMeetingRoomName());
+        });
+        return bookings;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable) {
         Page<BookingResponse> bookings = bookingRepository.findBookings(memberInfo.getNo(), pageable);
 
@@ -102,8 +131,9 @@ public class BookingServiceImpl implements BookingService{
         Page<BookingResponse> bookings = bookingRepository.findBookings(null, pageable);
 
         bookings.forEach(booking -> {
-            String mbName = getMemberName(booking.getMbNo());
-            booking.setMbName(mbName);
+            MemberResponse member = getMember(booking.getMbNo());
+            booking.setMbName(member.getName());
+            booking.setEmail(member.getEmail());
 
             MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
             booking.setRoomName(room.getMeetingRoomName());
@@ -119,25 +149,23 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public BookingResponse updateBooking(Long no, BookingUpdateRequest request){
+    public BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo){
         Booking booking = bookingRepository.findById(no).orElseThrow(() -> new BookingNotFoundException(no));
 
         checkMember(booking.getMbNo(), MemberThreadLocal.getMemberNo());
 
-        String mbName = getMemberName(booking.getMbNo());
-        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
+        MeetingRoomResponse room = getMeetingRoom(request.getRoomNo());
 
         LocalDate date = LocalDate.parse(request.getDate());
         LocalTime time = LocalTime.parse(request.getTime());
         LocalDateTime dateTime = LocalDateTime.of(date, time);
-        booking.update(dateTime, request.getAttendeeCount(), dateTime.plusHours(1));
+        booking.update(dateTime, request.getAttendeeCount(), dateTime.plusHours(1), room.getNo());
 
         BookingChange change = bookingChangeRepository.findById(BookingChangeType.CHANGE.getId())
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CHANGE.getId()));
         booking.updateBookingEvent(change);
 
-        return convertBookingResponse(booking, mbName, room.getMeetingRoomName());
+        return convertBookingResponse(booking, memberInfo.getName(), room.getMeetingRoomName());
     }
 
     @Override
@@ -145,12 +173,15 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
+        if(bookingRepository.existsBooking(booking.getRoomNo(), booking.getFinishedAt().plusMinutes(30))){
+            throw new AlreadyMeetingRoomTimeException();
+        }
+
         BookingChange change = bookingChangeRepository.findById(BookingChangeType.EXTEND.getId())
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.EXTEND.getId()));
 
         booking.updateBookingEvent(change);
         booking.updateFinishedAt(booking.getFinishedAt().plusMinutes(30));
-
     }
 
     @Override
@@ -176,8 +207,6 @@ public class BookingServiceImpl implements BookingService{
 
         booking.updateBookingEvent(change);
         booking.updateFinishedAt(null);
-
-        // 언제 취소 됐는지 있어야할 듯
     }
 
     private BookingResponse convertBookingResponse(Booking booking, String mbName, String roomName){
@@ -187,9 +216,9 @@ public class BookingServiceImpl implements BookingService{
                 booking.getBookingDate(),
                 booking.getAttendeeCount(),
                 booking.getFinishedAt(),
-                booking.getCreatedAt(),
                 booking.getMbNo(),
                 mbName,
+                null,
                 booking.getBookingChange() == null ? null : booking.getBookingChange().getName(),
                 booking.getRoomNo(),
                 roomName
@@ -212,13 +241,13 @@ public class BookingServiceImpl implements BookingService{
         return room;
     }
 
-    private String getMemberName(Long mbNo) {
-        ResponseEntity<MemberResponse> memberEntity = memberAdaptor.getMemberName(mbNo);
+    private MemberResponse getMember(Long mbNo) {
+        ResponseEntity<MemberResponse> memberEntity = memberAdaptor.getMember(mbNo);
         MemberResponse member = memberEntity.getBody();
         if (!memberEntity.getStatusCode().is2xxSuccessful() || member == null) {
             throw new MemberNotFoundException(mbNo);
         }
 
-        return member.getName();
+        return member;
     }
 }

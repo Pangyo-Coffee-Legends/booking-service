@@ -80,7 +80,19 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/my")
+    @GetMapping("/me/statistics")
+    public ResponseEntity<List<BookingResponse>> getBookingsByMember(@ModelAttribute("memberInfo") MemberResponse memberInfo){
+        List<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<List<BookingResponse>> getAllBookings(){
+        List<BookingResponse> responses = bookingService.getAllBookings();
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/me")
     public ResponseEntity<Page<BookingResponse>> getBookingsByMember(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
         Page<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
         return ResponseEntity.ok(responses);
@@ -106,8 +118,8 @@ public class BookingController {
      * @return 수정된 예약 정보
      */
     @PutMapping("/{no}")
-    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request){
-        BookingResponse response = bookingService.updateBooking(no, request);
+    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        BookingResponse response = bookingService.updateBooking(no, request, memberInfo);
         return ResponseEntity.ok(response);
     }
 
@@ -146,5 +158,14 @@ public class BookingController {
     public ResponseEntity<BookingResponse> deleteBooking(@PathVariable("no") Long no, @ModelAttribute("memberInfo") MemberResponse memberInfo){
         bookingService.cancelBooking(no, memberInfo);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<Boolean> verifyPassword(@Validated @RequestBody ConfirmPasswordRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
+        ResponseEntity<Boolean> valid =  memberAdaptor.verify(memberInfo.getNo(), request);
+        if(Boolean.FALSE.equals(valid.getBody())) {
+            return ResponseEntity.badRequest().build();
+        }
+        return valid;
     }
 }

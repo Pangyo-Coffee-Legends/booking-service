@@ -31,6 +31,17 @@ public interface CustomBookingRepository {
     Optional<BookingResponse> findByNo(Long no);
 
     /**
+     * 예약 목록을 조회합니다.
+     * <p>
+     * 예약자 번호가 {@code null}인 경우 전체 예약 목록을 조회하며,<br>
+     * 그렇지 않으면 해당 예약자의 예약 목록만 조회합니다.
+     *
+     * @param attendeeNo 예약자 식별번호 (nullable)
+     * @return 예약 목록이 포함된 List 객체
+     */
+    List<BookingResponse> findBookingList(Long attendeeNo);
+
+    /**
      * 페이징(Pageable) 조건에 맞는 예약 목록을 조회합니다.
      * <p>
      * 예약자 번호가 {@code null}인 경우 전체 예약 목록을 조회하며,<br>
@@ -59,4 +70,13 @@ public interface CustomBookingRepository {
      * @return 예약이 존재하면 true, 존재하지 않으면 false
      */
     boolean existsRoomNoAndDate(Long roomNo, LocalDateTime date);
+
+    /**
+     * 주어진 회의실 번호와 예약 일자에 예약이 존재하는지 여부를 확인합니다.
+     *
+     * @param roomNo 회의실 번호
+     * @param date 예약 일자 및 시간
+     * @return 예약이 존재하면 true, 존재하지 않으면 false
+     */
+    boolean existsBooking(Long roomNo, LocalDateTime date);
 }

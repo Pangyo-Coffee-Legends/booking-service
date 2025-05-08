@@ -31,50 +31,47 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     QBooking qBooking = QBooking.booking;
     QBookingChange qBookingChange = QBookingChange.bookingChange;
 
+    private JPAQuery<BookingResponse> getBookingQuery(JPAQueryFactory queryFactory) {
+        return queryFactory
+                .select(new QBookingResponse(
+                        qBooking.bookingNo,
+                        qBooking.bookingCode,
+                        qBooking.bookingDate,
+                        qBooking.attendeeCount,
+                        qBooking.finishedAt,
+                        qBooking.mbNo,
+                        qBooking.bookingChange.name.as("changeName"),
+                        qBooking.roomNo
+                ))
+                .from(qBooking)
+                .leftJoin(qBooking.bookingChange, qBookingChange);
+    }
+
     @Override
     public Optional<BookingResponse> findByNo(Long no){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        return Optional.ofNullable(query
-                .select(new QBookingResponse(
-                            qBooking.bookingNo,
-                            qBooking.bookingCode,
-                            qBooking.bookingDate,
-                            qBooking.attendeeCount,
-                            qBooking.finishedAt,
-                            qBooking.createdAt,
-                            qBooking.mbNo,
-                            qBooking.bookingChange.name.as("changeName"),
-                            qBooking.roomNo
-                        )
-                )
-                .from(qBooking)
-                .leftJoin(qBooking.bookingChange, qBookingChange)
+        return Optional.ofNullable(getBookingQuery(query)
                 .where(qBooking.bookingNo.eq(no))
                 .orderBy(qBooking.createdAt.desc())
                 .fetchOne());
     }
 
+    @Override
+    public List<BookingResponse> findBookingList(Long mbNo){
+        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+
+        return getBookingQuery(query)
+                .where(whereExpression(mbNo))
+                .orderBy(qBooking.createdAt.desc())
+                .fetch();
+    }
 
     @Override
     public Page<BookingResponse> findBookings(Long mbNo, Pageable pageable){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        List<BookingResponse> bookingList = query
-                .select(new QBookingResponse(
-                                qBooking.bookingNo,
-                                qBooking.bookingCode,
-                                qBooking.bookingDate,
-                                qBooking.attendeeCount,
-                                qBooking.finishedAt,
-                                qBooking.createdAt,
-                                qBooking.mbNo,
-                                qBooking.bookingChange.name.as("changeName"),
-                                qBooking.roomNo
-                        )
-                )
-                .from(qBooking)
-                .leftJoin(qBooking.bookingChange, qBookingChange)
+        List<BookingResponse> bookingList = getBookingQuery(query)
                 .where(whereExpression(mbNo))
                 .orderBy(qBooking.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -126,7 +123,22 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
         Long exist = query.select(qBooking.count())
                 .from(qBooking)
-                .where(qBooking.roomNo.eq(roomNo).and(qBooking.bookingDate.eq(date)))
+                .where(qBooking.roomNo.eq(roomNo),
+                        qBooking.bookingDate.lt(date.plusHours(1)),
+                        qBooking.finishedAt.gt(date)
+                )
+                .fetchOne();
+
+        return exist != null && exist > 0;
+    }
+
+    @Override
+    public boolean existsBooking(Long roomNo, LocalDateTime date) {
+        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+
+        Long exist = query.select(qBooking.count())
+                .from(qBooking)
+                .where(qBooking.roomNo.eq(roomNo), qBooking.bookingDate.eq(date))
                 .fetchOne();
 
         return exist != null && exist > 0;

@@ -40,8 +40,23 @@ public interface BookingService {
      * 예약 목록을 페이징 처리하여 조회합니다.
      *
      * @param memberResponse 예약한 사용자 정보
-     * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     */
+    List<BookingResponse> getBookingsByMember(MemberResponse memberResponse);
+
+    /**
+     * 예약 전체 목록을 페이징 처리하여 조회합니다.
+     *
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     */
+    List<BookingResponse> getAllBookings();
+
+    /**
+     * 예약 목록을 페이징 처리하여 조회합니다.
+     *
+     * @param memberResponse 예약한 사용자 정보
+     * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
     Page<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
 
@@ -49,11 +64,19 @@ public interface BookingService {
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
      *
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
-     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
     Page<BookingResponse> getAllBookings(Pageable pageable);
 
+    /**
+     * 지정한 회의실 번호와 날짜를 기준으로 하루 동안의 예약 목록을 조회합니다.
+     *
+     * @param roomNo 회의실 번호
+     * @param date 조회할 날짜
+     * @return 해당 날짜의 예약 목록
+     */
     List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date);
+
     /**
      * 예약 정보를 수정합니다.
      *
@@ -61,7 +84,7 @@ public interface BookingService {
      * @param request 예약 수정 요청 정보를 담은 객체
      * @return 수정된 예약 정보
      */
-    BookingResponse updateBooking(Long no, BookingUpdateRequest request);
+    BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo);
 
     /**
      * 예약을 연장 합니다.

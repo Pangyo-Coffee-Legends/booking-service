@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -74,7 +73,6 @@ class BookingRepositoryImplTest {
         assertNotNull(response);
         assertAll(() -> {
             assertEquals("test1", response.getCode());
-            assertNotNull(response.getCreatedAt());
             assertNull(response.getChangeName());
             assertEquals(1L, response.getMbNo());
             assertEquals(1L, response.getRoomNo());
@@ -82,12 +80,58 @@ class BookingRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("예약 조회 - 사용자별")
-    void findBookingsByMbNo() {
+    @DisplayName("예약 조회(리스트) - 사용자별")
+    void findBookingsByMbNo_list() {
+        Booking booking1 = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        Booking booking2 = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-30T09:30:00"), 8, LocalDateTime.parse("2025-04-30T10:30:00"), 2L, null, 2L);
+        manager.persistAndFlush(booking1);
+        manager.persistAndFlush(booking2);
+
+        List<BookingResponse> response = bookingRepository.findBookingList(1L);
+
+        assertNotNull(response);
+        assertAll(() -> {
+            assertEquals(1, response.size());
+            assertEquals("test2", response.getFirst().getCode());
+            assertEquals(8, response.getFirst().getAttendeeCount());
+            assertEquals(1L, response.getFirst().getMbNo());
+            assertEquals(2L, response.getFirst().getRoomNo());
+        });
+    }
+
+    @Test
+    @DisplayName("예약 조회(리스트) - 전체")
+    void findAllBookings_list() {
+        Booking booking1 = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        Booking booking2 = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-30T09:30:00"), 9, LocalDateTime.parse("2025-04-30T10:30:00"), 2L, null, 2L);
+        manager.persistAndFlush(booking1);
+        manager.persistAndFlush(booking2);
+
+        List<BookingResponse> response = bookingRepository.findBookingList(null);
+
+        assertNotNull(response);
+        assertAll(() -> {
+            assertEquals(2, response.size());
+
+            assertEquals("test3", response.getFirst().getCode());
+            assertEquals(9, response.getFirst().getAttendeeCount());
+            assertEquals(2L, response.getFirst().getMbNo());
+            assertEquals(2L, response.getFirst().getRoomNo());
+
+            assertEquals("test2", response.get(1).getCode());
+            assertEquals(8, response.get(1).getAttendeeCount());
+            assertEquals(1L, response.get(1).getMbNo());
+            assertEquals(2L, response.get(1).getRoomNo());
+        });
+    }
+
+    @Test
+    @DisplayName("예약 조회(페이징) - 사용자별")
+    void findBookingsByMbNo_page() {
         Booking booking = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
-        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getMbNo(),  null, booking.getRoomNo());
 
         Page<BookingResponse> response = bookingRepository.findBookings(1L, Pageable.ofSize(1));
 
@@ -96,12 +140,12 @@ class BookingRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("예약 조회 - 전체")
-    void findAllBookings() {
+    @DisplayName("예약 조회(페이징) - 전체")
+    void findAllBookings_page() {
         Booking booking = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
-        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getMbNo(),  null, booking.getRoomNo());
 
         Page<BookingResponse> response = bookingRepository.findBookings(null, Pageable.ofSize(1));
 
@@ -145,12 +189,34 @@ class BookingRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("예약 중복 체크 - 중복")
-    void existsRoomNoAndDate() {
+    @DisplayName("예약 중복 체크 - 시간이 같은 경우")
+    void existsRoomNoAndDate_true_case1() {
         Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
         boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T09:30:00"));
+
+        assertTrue(actual);
+    }
+
+    @Test
+    @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우1")
+    void existsRoomNoAndDate_true_case2() {
+        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        manager.persistAndFlush(booking);
+
+        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:00:00"));
+
+        assertTrue(actual);
+    }
+
+    @Test
+    @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우2")
+    void existsRoomNoAndDate_true_case3() {
+        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T10:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        manager.persistAndFlush(booking);
+
+        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:00:00"));
 
         assertTrue(actual);
     }
