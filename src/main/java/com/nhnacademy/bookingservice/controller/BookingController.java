@@ -147,4 +147,30 @@ public class BookingController {
         bookingService.cancelBooking(no, memberInfo);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * 회의실 사용 예약을 확인하고, 해당 회의실 예약 정보를 반환합니다.
+     *
+     * @param no 예약번호
+     * @param entryRequest 회의실 입실 요청 DTO
+     * @return EntryResponse 회의실 입실 응답 ResponseEntity
+     */
+    @PostMapping("/{no}/enter")
+    public ResponseEntity<EntryResponse> checkBooking(@PathVariable("no") Long no, @RequestBody EntryRequest entryRequest) {
+        boolean isPermitted = bookingService.checkBooking(no, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getMeetingRoomNo());
+
+        if (isPermitted) {
+            return ResponseEntity
+                    .ok(new EntryResponse(
+                            entryRequest.getCode(),
+                            entryRequest.getEntryTime(),
+                            entryRequest.getMeetingRoomNo()
+                    ));
+        } else {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+    }
+
 }

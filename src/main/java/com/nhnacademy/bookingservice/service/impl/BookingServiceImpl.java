@@ -6,7 +6,10 @@ import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
+import com.nhnacademy.bookingservice.common.exception.booking.BookingInfoDoesNotMatchException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
+import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeHasPassedException;
+import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeNotReachedException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
@@ -24,12 +27,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 
 @Service
@@ -176,6 +179,51 @@ public class BookingServiceImpl implements BookingService{
         booking.updateFinishedAt(null);
 
         // 언제 취소 됐는지 있어야할 듯
+    }
+
+    /**
+     *
+     * @param no 예약번호
+     * @param code 회의실 예약 시 발급 받은 예약 코드
+     * @param entryTime 회의실
+     * @param meetingRoomNo 회의실 번호
+     * @return 회의실 입실 허가 boolean 반환
+     */
+    @Override
+    public boolean checkBooking(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo) {
+        // 저장된 예약정보 찾아오기
+        BookingResponse bookingResponse = bookingRepository.findByNo(no).orElseThrow(() -> new BookingNotFoundException(no));
+
+        // 저장된 예약정보 내 예약코드
+        String bookingCode = bookingResponse.getCode();
+
+        // 예약 날짜와 회의실 입실 날짜 비교를 위한 날짜 포맷
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 예약 날짜
+        LocalDateTime bookingDateTime = bookingResponse.getDate();
+        String bookingDateStr = bookingDateTime.format(dateFormatter);
+
+        // 회의실 입실 날짜
+        String entryDateStr = entryTime.format(dateFormatter);
+
+        // 예약 시간과 입실 시간 차이
+        Duration duration = Duration.between(bookingDateTime, entryTime);
+        long minutes = duration.toMinutesPart();
+
+        if (bookingCode.equals(code) && bookingDateStr.equals(entryDateStr)) {
+            if (Math.abs(minutes) <= 10) { // 예약 시간과 입실 시간 차이 절댓값 10 이하
+                return true;
+            } else if (minutes < -10) {
+                throw new BookingTimeNotReachedException();
+            } else if (minutes > 10) {
+                throw new BookingTimeHasPassedException();
+            }
+        } else {
+            throw new BookingInfoDoesNotMatchException();
+        }
+
+        return false;
     }
 
     private BookingResponse convertBookingResponse(Booking booking, String mbName, String roomName){

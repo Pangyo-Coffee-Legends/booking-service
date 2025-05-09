@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -83,5 +84,7 @@ public interface BookingService {
      * @param no 예약 번호
      */
     void cancelBooking(Long no, MemberResponse memberInfo);
+
+    boolean checkBooking(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo);
 }
 
