@@ -43,7 +43,6 @@ public class BookingEmailEventListener {
                             </p>
                             <hr>
                             <br>
-                            <br>
                         
                            <p>
                                회의 시작 <strong>10분 전까지</strong> 회의실에 도착해 주세요. 예약 변경이나 취소가 필요하신 경우 아래 버튼을 클릭해 주세요.
@@ -52,6 +51,7 @@ public class BookingEmailEventListener {
                            <div class="cta">
                                <a href="https://aiot2.live/booking/history">예약 확인/변경하기</a>
                            </div>
+                            <br>
                         
                            <p style="color: gray; font-size: small;">
                                 본 메일은 시스템에 의해 자동 발송되었습니다.<br>

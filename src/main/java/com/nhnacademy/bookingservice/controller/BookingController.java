@@ -192,10 +192,9 @@ public class BookingController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<Boolean> verifyPassword(@Validated @RequestBody ConfirmPasswordRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
-        Boolean valid =  memberAdaptor.verify(memberInfo.getNo(), request);
-
+    @PostMapping("/{no}/verify")
+    public ResponseEntity<Boolean> verifyPassword(@PathVariable("no") Long no, @Validated @RequestBody ConfirmPasswordRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
+        Boolean valid =  bookingService.verify(no, request, memberInfo);
         return ResponseEntity.ok(valid);
     }
 }

@@ -4,6 +4,7 @@ import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
 import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
+import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
@@ -82,8 +83,8 @@ class BookingServiceImplTest {
 
         bookingService.register(request, memberInfo);
 
-        verify(bookingRepository, Mockito.times(1)).save(Mockito.any(Booking.class));
-        verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCreatedEvent.class));
+        Mockito.verify(bookingRepository, Mockito.times(1)).save(Mockito.any(Booking.class));
+        Mockito.verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCreatedEvent.class));
 
     }
 
@@ -96,7 +97,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
         Assertions.assertThrows(MeetingRoomCapacityExceededException.class, () -> bookingService.register(request, memberInfo));
 
-        verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
+        Mockito.verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
 
     @Test
@@ -110,7 +111,7 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
-        verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
+        Mockito.verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
 
     @Test
@@ -124,7 +125,7 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
-        verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
+        Mockito.verify(bookingRepository, Mockito.never()).save(Mockito.any(Booking.class));
     }
 
     @Test
@@ -135,8 +136,8 @@ class BookingServiceImplTest {
 
         bookingService.getBooking(1L, memberInfo);
 
-        verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -148,7 +149,7 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(ForbiddenException.class, () -> bookingService.getBooking(1L, member));
 
-        verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
 
     @Test
@@ -160,7 +161,7 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(BookingNotFoundException.class, () -> bookingService.getBooking(1L, member));
 
-        verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
 
     @Test
@@ -171,8 +172,8 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(MeetingRoomNotFoundException.class, () -> bookingService.getBooking(1L, memberInfo));
 
-        verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
     }
 //
 //    @Test
@@ -195,8 +196,8 @@ class BookingServiceImplTest {
 
         bookingService.getBookingsByMember(memberInfo);
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookingList(1L);
-        verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(1L);
+        Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -208,9 +209,9 @@ class BookingServiceImplTest {
 
         bookingService.getAllBookings();
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookingList(null);
-        verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(null);
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -221,8 +222,8 @@ class BookingServiceImplTest {
 
         bookingService.getBookingsByMember(memberInfo, Pageable.ofSize(1));
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookings(1L, Pageable.ofSize(1));
-        verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(1L, Pageable.ofSize(1));
+        Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -234,9 +235,9 @@ class BookingServiceImplTest {
 
         bookingService.getAllBookings(Pageable.ofSize(1));
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -248,8 +249,8 @@ class BookingServiceImplTest {
         Pageable pageable = Pageable.ofSize(1);
         Assertions.assertThrows(MemberNotFoundException.class, () -> bookingService.getAllBookings(pageable));
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
     }
 
     @Test
@@ -262,9 +263,9 @@ class BookingServiceImplTest {
         Pageable pageable = Pageable.ofSize(1);
         Assertions.assertThrows(MeetingRoomNotFoundException.class, () -> bookingService.getAllBookings(pageable));
 
-        verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
     @Test
@@ -276,7 +277,7 @@ class BookingServiceImplTest {
 
         List<DailyBookingResponse> responseList =  bookingService.getDailyBookings(1L, LocalDate.parse("2025-04-29"));
 
-        verify(bookingRepository, Mockito.times(1)).findBookingsByDate(Mockito.anyLong(), Mockito.any());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findBookingsByDate(Mockito.anyLong(), Mockito.any());
 
         Assertions.assertNotNull(responseList);
         Assertions.assertEquals(1L, responseList.getFirst().getNo());
@@ -299,9 +300,9 @@ class BookingServiceImplTest {
 
         bookingService.updateBooking(1L, request, memberInfo);
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
-        verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.CHANGE.getId());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
+        Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.CHANGE.getId());
     }
 
     @Test
@@ -316,7 +317,7 @@ class BookingServiceImplTest {
 
         Assertions.assertThrows(BookingNotFoundException.class, () -> bookingService.updateBooking(1L, request, memberInfo));
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
     }
 
     @Test
@@ -333,8 +334,8 @@ class BookingServiceImplTest {
 
         bookingService.extendBooking(1L);
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.EXTEND.getId());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.EXTEND.getId());
 
     }
 
@@ -354,8 +355,8 @@ class BookingServiceImplTest {
             bookingService.extendBooking(1L);
         });
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        verify(bookingRepository, Mockito.times(1)).existsBooking(Mockito.anyLong(), Mockito.any());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingRepository, Mockito.times(1)).existsBooking(Mockito.anyLong(), Mockito.any());
     }
 
     @Test
@@ -372,8 +373,8 @@ class BookingServiceImplTest {
 
         bookingService.finishBooking(1L);
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.FINISH.getId());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.FINISH.getId());
 
     }
 
@@ -391,8 +392,35 @@ class BookingServiceImplTest {
 
         bookingService.cancelBooking(1L, memberInfo);
 
-        verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.CANCEL.getId());
-        verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCancelEvent.class));
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.CANCEL.getId());
+        Mockito.verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCancelEvent.class));
+    }
+
+    @Test
+    @DisplayName("본인인증 성공")
+    void verify() {
+        ConfirmPasswordRequest request = new ConfirmPasswordRequest("Test123!");
+        when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
+        when(memberAdaptor.verify(Mockito.anyLong(), Mockito.any())).thenReturn(true);
+
+        bookingService.verify(1L, request, memberInfo);
+
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.times(1)).verify(Mockito.anyLong(), Mockito.any());
+    }
+
+    @Test
+    @DisplayName("본인인증 실패 - bad request")
+    void verify_exception_case() {
+        ConfirmPasswordRequest request = new ConfirmPasswordRequest("test123!");
+
+        when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
+        when(memberAdaptor.verify(1L, request)).thenReturn(false);
+
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.verify(1L, request, memberInfo));
+
+        Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.times(1)).verify(1L, request);
     }
 }

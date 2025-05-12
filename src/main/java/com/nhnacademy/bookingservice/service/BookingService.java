@@ -28,10 +28,10 @@ public interface BookingService {
     BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest, MemberResponse memberInfo);
 
     /**
-     * 예약 번호와 회원 정보를 기반으로 예약 정보를 조회합니다.
+     * 예약 번호와 사용자 정보를 기반으로 예약 정보를 조회합니다.
      *
      * @param no 예약 번호
-     * @param memberInfo 회원 정보
+     * @param memberInfo 예약한 사용자 정보
      * @return 조회된 예약 정보
      */
     BookingResponse getBooking(Long no, MemberResponse memberInfo);
@@ -39,10 +39,10 @@ public interface BookingService {
     /**
      * 예약 목록을 페이징 처리하여 조회합니다.
      *
-     * @param memberResponse 예약한 사용자 정보
+     * @param memberInfo 예약한 사용자 정보
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getBookingsByMember(MemberResponse memberResponse);
+    List<BookingResponse> getBookingsByMember(MemberResponse memberInfo);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
@@ -54,11 +54,11 @@ public interface BookingService {
     /**
      * 예약 목록을 페이징 처리하여 조회합니다.
      *
-     * @param memberResponse 예약한 사용자 정보
+     * @param memberInfo 예약한 사용자 정보
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
-    Page<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
+    Page<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
@@ -82,6 +82,7 @@ public interface BookingService {
      *
      * @param no 예약 번호
      * @param request 예약 수정 요청 정보를 담은 객체
+     * @param memberInfo 예약한 사용자 정보
      * @return 수정된 예약 정보
      */
     BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo);
@@ -104,7 +105,17 @@ public interface BookingService {
      * 예약을 취소합니다.
      *
      * @param no 예약 번호
+     * @param memberInfo 예약한 사용자 정보
      */
     void cancelBooking(Long no, MemberResponse memberInfo);
+
+    /**
+     * 본인 인증 합니다.
+     *
+     * @param no 예약 번호
+     * @param request 비밀번호 정보
+     * @param memberInfo 예약한 사용자 정보
+     */
+    boolean verify(Long no, ConfirmPasswordRequest request, MemberResponse memberInfo);
 }
 

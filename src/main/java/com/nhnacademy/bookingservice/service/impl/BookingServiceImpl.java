@@ -4,6 +4,7 @@ import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
 import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
+import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
@@ -203,8 +204,10 @@ public class BookingServiceImpl implements BookingService{
     public void cancelBooking(Long no, MemberResponse memberInfo){
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
-        checkMember(booking.getMbNo(), memberInfo.getNo());
 
+        if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
+            checkMember(booking.getMbNo(), memberInfo.getNo());
+        }
         BookingChange change = bookingChangeRepository.findById(BookingChangeType.CANCEL.getId())
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CANCEL.getId()));
 
@@ -212,6 +215,22 @@ public class BookingServiceImpl implements BookingService{
         booking.updateFinishedAt(null);
 
         publisher.publishEvent(new BookingCancelEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
+    }
+
+    @Override
+    public boolean verify(Long no, ConfirmPasswordRequest request, MemberResponse memberInfo) {
+        BookingResponse booking = bookingRepository.findByNo(no)
+                                                    .orElseThrow(() -> new BookingNotFoundException(no));
+
+        if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
+            checkMember(booking.getMbNo(), memberInfo.getNo());
+        }
+
+       boolean isVerify =  memberAdaptor.verify(memberInfo.getNo(), request);
+        if(!isVerify) {
+            throw new BadRequestException();
+        }
+        return true;
     }
 
     private BookingResponse convertBookingResponse(Booking booking, String mbName, String roomName){
