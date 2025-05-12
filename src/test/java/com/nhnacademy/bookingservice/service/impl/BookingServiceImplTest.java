@@ -2,6 +2,8 @@ package com.nhnacademy.bookingservice.service.impl;
 
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
+import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
+import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
@@ -20,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -35,6 +38,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceImplTest {
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @Mock
     private BookingRepository bookingRepository;
@@ -77,6 +83,8 @@ class BookingServiceImplTest {
         bookingService.register(request, memberInfo);
 
         verify(bookingRepository, Mockito.times(1)).save(Mockito.any(Booking.class));
+        verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCreatedEvent.class));
+
     }
 
     @Test
@@ -385,5 +393,6 @@ class BookingServiceImplTest {
 
         verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
         verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.CANCEL.getId());
+        verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCancelEvent.class));
     }
 }

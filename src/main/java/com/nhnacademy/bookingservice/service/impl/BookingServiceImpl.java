@@ -2,13 +2,13 @@ package com.nhnacademy.bookingservice.service.impl;
 
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
+import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
+import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
-import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomNotFoundException;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.BookingChange;
 import com.nhnacademy.bookingservice.dto.*;
@@ -17,9 +17,9 @@ import com.nhnacademy.bookingservice.repository.BookingChangeRepository;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +35,8 @@ import java.util.UUID;
 @Transactional
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService{
+
+    private final ApplicationEventPublisher publisher;
 
     private final BookingRepository bookingRepository;
     private final BookingChangeRepository bookingChangeRepository;
@@ -62,6 +64,8 @@ public class BookingServiceImpl implements BookingService{
 
         Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), memberInfo.getNo(), null, request.getRoomNo());
         bookingRepository.save(booking);
+
+        publisher.publishEvent(new BookingCreatedEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
 
         return new BookingRegisterResponse(booking.getBookingNo());
     }
@@ -206,6 +210,8 @@ public class BookingServiceImpl implements BookingService{
 
         booking.updateBookingEvent(change);
         booking.updateFinishedAt(null);
+
+        publisher.publishEvent(new BookingCancelEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
     }
 
     private BookingResponse convertBookingResponse(Booking booking, String mbName, String roomName){
