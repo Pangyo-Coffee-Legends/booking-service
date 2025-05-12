@@ -8,8 +8,10 @@ import com.nhnacademy.bookingservice.dto.EmailRequest;
 import com.nhnacademy.bookingservice.dto.MeetingRoomResponse;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -19,7 +21,8 @@ public class BookingEmailEventListener {
     private final MeetingRoomAdaptor meetingRoomAdaptor;
     private final BookingRepository bookingRepository;
 
-    @EventListener(classes = BookingCreatedEvent.class)
+    @Async
+    @TransactionalEventListener(classes = BookingCreatedEvent.class, phase = TransactionPhase.AFTER_COMMIT)
     public void handleBookingCreatedEvent(BookingCreatedEvent event){
 
         BookingResponse booking = bookingRepository.findByNo(event.getBookingNo()).orElseThrow(BookingNotFoundException::new);
@@ -45,7 +48,8 @@ public class BookingEmailEventListener {
                             <br>
                         
                            <p>
-                               회의 시작 <strong>10분 전까지</strong> 회의실에 도착해 주세요. 예약 변경이나 취소가 필요하신 경우 아래 버튼을 클릭해 주세요.
+                                회의 시작 <strong>10분 후</strong>까지 입장 확인이 되지 않을 경우, 해당 예약은 자동으로 취소됩니다.<br>
+                                예약 변경이나 취소가 필요하신 경우, 아래 버튼을 눌러 주세요.
                            </p>
                         
                            <div class="cta">
@@ -61,14 +65,15 @@ public class BookingEmailEventListener {
                                 event.getEmail(),
                                 booking.getCode(),
                                 booking.getRoomName(),
-                                booking.getDate())
+                                booking.getDate().toString().replace("T", " "))
         );
 
         notifyAdaptor.sendHtmlEmail(request);
 
     }
 
-    @EventListener(classes = BookingCancelEvent.class)
+    @Async
+    @TransactionalEventListener(classes = BookingCancelEvent.class, phase = TransactionPhase.AFTER_COMMIT)
     public void handleBookingCancelEvent(BookingCancelEvent event){
 
         BookingResponse booking = bookingRepository.findByNo(event.getBookingNo()).orElseThrow(BookingNotFoundException::new);
@@ -102,7 +107,7 @@ public class BookingEmailEventListener {
                         event.getEmail(),
                         booking.getCode(),
                         booking.getRoomName(),
-                        booking.getDate())
+                        booking.getDate().toString().replace("T", " "))
         );
 
         notifyAdaptor.sendHtmlEmail(request);

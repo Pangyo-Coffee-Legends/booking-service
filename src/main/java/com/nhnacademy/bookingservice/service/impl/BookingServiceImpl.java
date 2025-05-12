@@ -86,6 +86,7 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getBookingsByMember(MemberResponse memberInfo) {
         List<BookingResponse> bookings = bookingRepository.findBookingList(memberInfo.getNo());
 
@@ -99,6 +100,7 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getAllBookings() {
         List<BookingResponse> bookings = bookingRepository.findBookingList(null);
 
