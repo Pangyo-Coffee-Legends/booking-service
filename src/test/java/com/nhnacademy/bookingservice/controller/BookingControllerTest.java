@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -298,6 +299,35 @@ class BookingControllerTest {
     }
 
     @Test
+    @DisplayName("예약 조회(페이징) 정렬")
+    void getAllBookings_sort() throws Exception {
+
+        MemberResponse admin = new MemberResponse(3L, "admin", "admin@test.com", "010-1111-1111" ,"ROLE_ADMIN");
+        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+
+        when(bookingService.getAllBookings(
+                argThat(pageable -> pageable.getSort().getOrderFor("bookingDate") != null
+                        && Objects.requireNonNull(pageable.getSort().getOrderFor("bookingDate")).getDirection().isDescending())
+        )).thenReturn(new PageImpl<>(List.of(response3, response4, response1, response2)));
+        mockMvc.perform(
+                        get("/api/v1/bookings?sort={field},{direction}", "bookingDate", "desc")
+                                .header("X-USER", "admin@test.com")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.[0].no").value(3L))
+                .andExpect(jsonPath("$.content.[1].no").value(4L))
+                .andExpect(jsonPath("$.content.[2].no").value(1L))
+                .andExpect(jsonPath("$.content.[3].no").value(2L))
+                .andDo(print());
+    }
+
+
+    @Test
     @DisplayName("예약 조회 - 회의실 날짜별")
     void getDailyBookings() throws Exception {
         DailyBookingResponse response1 = new DailyBookingResponse(1L, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
@@ -392,7 +422,7 @@ class BookingControllerTest {
 
         when(memberAdaptor.verify(1L, request)).thenReturn(true);
         mockMvc.perform(
-                        post("/api/v1/bookings/verify")
+                        post("/api/v1/bookings/{no}/verify", 1L)
                                 .header("X-USER", "test@test.com")
                                 .content(body)
                                 .contentType(MediaType.APPLICATION_JSON)

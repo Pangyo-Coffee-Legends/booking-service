@@ -8,8 +8,11 @@ import com.nhnacademy.bookingservice.entity.BookingChangeType;
 import com.nhnacademy.bookingservice.entity.QBooking;
 import com.nhnacademy.bookingservice.entity.QBookingChange;
 import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
+import com.nhnacademy.bookingservice.repository.util.QueryDslUtil;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
@@ -30,6 +33,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     QBooking qBooking = QBooking.booking;
     QBookingChange qBookingChange = QBookingChange.bookingChange;
+
+    PathBuilder<Booking> entityPath = new PathBuilder<>(Booking.class, "booking");
 
     private JPAQuery<BookingResponse> getBookingQuery(JPAQueryFactory queryFactory) {
         return queryFactory
@@ -70,17 +75,23 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public Page<BookingResponse> findBookings(Long mbNo, Pageable pageable){
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+        JPAQueryFactory queryFactory = new JPAQueryFactory(getEntityManager());
+        JPAQuery<BookingResponse> query = getBookingQuery(queryFactory)
+                .where(whereExpression(mbNo));
 
-        List<BookingResponse> bookingList = getBookingQuery(query)
-                .where(whereExpression(mbNo))
-                .orderBy(qBooking.createdAt.desc())
+
+        List<OrderSpecifier> orderSpecifiers = QueryDslUtil.getOrderSpecifiers(pageable, entityPath);
+
+        List<BookingResponse> bookingList = query
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        JPAQuery<Long> count = query.select(qBooking.count())
-                                    .from(qBooking);
+        JPAQuery<Long> count = queryFactory.select(qBooking.count())
+                .from(qBooking)
+                .where(whereExpression(mbNo));
+
 
         return PageableExecutionUtils.getPage(bookingList, pageable, count::fetchOne);
     }

@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -351,9 +350,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(booking));
         when(bookingRepository.existsBooking(Mockito.anyLong(), Mockito.any())).thenReturn(true);
 
-        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> {
-            bookingService.extendBooking(1L);
-        });
+        Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.extendBooking(1L));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
         Mockito.verify(bookingRepository, Mockito.times(1)).existsBooking(Mockito.anyLong(), Mockito.any());
