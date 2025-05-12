@@ -6,6 +6,7 @@ import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
+import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,10 +39,10 @@ class BookingControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private BookingService bookingService;
+    BookingService bookingService;
 
     @MockitoBean
-    private MemberAdaptor memberAdaptor;
+    MemberAdaptor memberAdaptor;
 
 
     @Autowired
@@ -52,7 +52,7 @@ class BookingControllerTest {
     @BeforeEach
     void modelAttribute() {
         member = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111" ,"ROLE_USER");
-        when(memberAdaptor.getMember("test@test.com")).thenReturn(ResponseEntity.ok(member));
+        when(memberAdaptor.getMember("test@test.com")).thenReturn(member);
     }
 
     @Test
@@ -132,7 +132,7 @@ class BookingControllerTest {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(memberAdaptor.getMember("test@test.com")).thenReturn(ResponseEntity.notFound().build());
+        when(memberAdaptor.getMember("test@test.com")).thenThrow(MemberNotFoundException.class);
         when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                         post("/api/v1/bookings")
@@ -270,6 +270,9 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(페이징) - 전체")
     void getAllBookings() throws Exception {
+        MemberResponse admin = new MemberResponse(1L, "admin", "admin@test.com", "010-1111-1111" ,"ROLE_ADMIN");
+        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+
         BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
         BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
         BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
@@ -279,7 +282,7 @@ class BookingControllerTest {
 
         mockMvc.perform(
                         get("/api/v1/bookings")
-                                .header("X-USER", "test@test.com")
+                                .header("X-USER", "admin@test.com")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.[0].no").value(1L))
@@ -387,7 +390,7 @@ class BookingControllerTest {
         ConfirmPasswordRequest request = new ConfirmPasswordRequest("test123!");
         String body = mapper.writeValueAsString(request);
 
-        when(memberAdaptor.verify(1L, request)).thenReturn(ResponseEntity.ok(true));
+        when(memberAdaptor.verify(1L, request)).thenReturn(true);
         mockMvc.perform(
                         post("/api/v1/bookings/verify")
                                 .header("X-USER", "test@test.com")

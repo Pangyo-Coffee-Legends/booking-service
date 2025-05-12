@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface MeetingRoomAdaptor {
 
     @GetMapping("/{no}")
-    ResponseEntity<MeetingRoomResponse> getMeetingRoom(@PathVariable("no") Long no);
+    MeetingRoomResponse getMeetingRoom(@PathVariable("no") Long no);
 }

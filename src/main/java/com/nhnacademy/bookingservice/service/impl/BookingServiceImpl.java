@@ -232,22 +232,10 @@ public class BookingServiceImpl implements BookingService{
     }
 
     private MeetingRoomResponse getMeetingRoom(Long roomNo){
-        ResponseEntity<MeetingRoomResponse> roomEntity = meetingRoomAdaptor.getMeetingRoom(roomNo);
-        MeetingRoomResponse room = roomEntity.getBody();
-        if(!roomEntity.getStatusCode().is2xxSuccessful()|| room == null){
-            throw new MeetingRoomNotFoundException();
-        }
-
-        return room;
+        return meetingRoomAdaptor.getMeetingRoom(roomNo);
     }
 
     private MemberResponse getMember(Long mbNo) {
-        ResponseEntity<MemberResponse> memberEntity = memberAdaptor.getMember(mbNo);
-        MemberResponse member = memberEntity.getBody();
-        if (!memberEntity.getStatusCode().is2xxSuccessful() || member == null) {
-            throw new MemberNotFoundException(mbNo);
-        }
-
-        return member;
+        return memberAdaptor.getMember(mbNo);
     }
 }

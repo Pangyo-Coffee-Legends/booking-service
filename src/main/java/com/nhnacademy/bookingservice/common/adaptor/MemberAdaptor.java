@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface MemberAdaptor {
 
     @GetMapping("/email/{email}/info")
-    ResponseEntity<MemberResponse> getMember(@PathVariable("email") String email);
+    MemberResponse getMember(@PathVariable("email") String email);
 
     @GetMapping("/{no}/info")
-    ResponseEntity<MemberResponse> getMember(@PathVariable("no") Long no);
+    MemberResponse getMember(@PathVariable("no") Long no);
 
     @PostMapping("/{mbNo}/password")
-    ResponseEntity<Boolean> verify(
+    Boolean verify(
             @PathVariable("mbNo") Long mbNo,
             @RequestBody @Valid ConfirmPasswordRequest request);
 }

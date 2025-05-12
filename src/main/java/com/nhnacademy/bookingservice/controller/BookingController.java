@@ -47,11 +47,7 @@ public class BookingController {
      */
     @ModelAttribute("memberInfo")
     public MemberResponse getMemberInfo(@RequestHeader("X-USER") String email){
-        ResponseEntity<MemberResponse> responseEntity = memberAdaptor.getMember(email);
-        if (!responseEntity.getStatusCode().is2xxSuccessful() || responseEntity.getBody() == null) {
-            throw new MemberNotFoundException();
-        }
-        return responseEntity.getBody();
+        return  memberAdaptor.getMember(email);
     }
 
     /**
@@ -79,24 +75,51 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 로그인한 회원의 예약 통계 목록을 조회합니다.
+     *
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 로그인한 회원의 예약 목록
+     */
     @GetMapping("/me/statistics")
     public ResponseEntity<List<BookingResponse>> getBookingsByMember(@ModelAttribute("memberInfo") MemberResponse memberInfo){
         List<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo);
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 전체 회원의 예약 통계 목록을 조회합니다.
+     * 관리자만 접근 가능합니다.
+     *
+     * @return 전체 예약 목록
+     */
     @GetMapping("/statistics")
     public ResponseEntity<List<BookingResponse>> getAllBookings(){
         List<BookingResponse> responses = bookingService.getAllBookings();
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 로그인한 회원의 예약 목록(페이지네이션 포함)을 조회합니다.
+     *
+     * @param pageable 페이징 정보
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 로그인한 회원의 예약 목록 페이지
+     */
     @GetMapping("/me")
     public ResponseEntity<Page<BookingResponse>> getBookingsByMember(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
         Page<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 전체 회원의 예약 목록(페이지네이션 포함)을 조회합니다.
+     * 관리자만 접근 가능합니다.
+     *
+     * @param pageable 페이징 정보
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 전체 예약 목록 페이지
+     */
     @GetMapping
     public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
         if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
@@ -106,6 +129,13 @@ public class BookingController {
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 특정 회의실의 특정 날짜에 해당하는 예약 목록을 조회합니다.
+     *
+     * @param roomNo 회의실 번호
+     * @param date 조회할 날짜 (yyyy-MM-dd 형식)
+     * @return 해당 회의실의 일일 예약 목록
+     */
     @GetMapping("/meeting-rooms/{roomNo}/date/{date}")
     public ResponseEntity<List<DailyBookingResponse>> getDailyBookings(@PathVariable("roomNo")Long roomNo, @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         List<DailyBookingResponse> responses = bookingService.getDailyBookings(roomNo, date);
@@ -164,10 +194,8 @@ public class BookingController {
 
     @PostMapping("/verify")
     public ResponseEntity<Boolean> verifyPassword(@Validated @RequestBody ConfirmPasswordRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
-        ResponseEntity<Boolean> valid =  memberAdaptor.verify(memberInfo.getNo(), request);
-        if(Boolean.FALSE.equals(valid.getBody())) {
-            return ResponseEntity.badRequest().build();
-        }
-        return valid;
+        Boolean valid =  memberAdaptor.verify(memberInfo.getNo(), request);
+
+        return ResponseEntity.ok(valid);
     }
 }
