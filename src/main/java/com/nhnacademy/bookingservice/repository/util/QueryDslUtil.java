@@ -8,7 +8,6 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class QueryDslUtil {
 
@@ -28,6 +27,6 @@ public class QueryDslUtil {
                     Path<Object> path = entityPath.get(order.getProperty());
                     return order.isAscending() ? new OrderSpecifier(Order.ASC, path) : new OrderSpecifier(Order.DESC, path);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 }

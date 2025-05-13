@@ -269,8 +269,8 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 조회(페이징) - 전체")
-    void getAllBookings() throws Exception {
+    @DisplayName("예약 전체 조회(페이징) - 관리자")
+    void getAllBookings_admin() throws Exception {
         MemberResponse admin = new MemberResponse(1L, "admin", "admin@test.com", "010-1111-1111" ,"ROLE_ADMIN");
         when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
 
@@ -295,6 +295,27 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.content.[2].no").value(3L))
                 .andExpect(jsonPath("$.content.[2].mbName").value("test"))
                 .andExpect(jsonPath("$.content.[2].roomName").value("회의실 B"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("예약 전체 조회(페이징) - 일반 사용자")
+    void getAllBookings_user() throws Exception {
+        MemberResponse admin = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111" ,"ROLE_USER");
+        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+
+        when(bookingService.getAllBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
+
+        mockMvc.perform(
+                        get("/api/v1/bookings")
+                                .header("X-USER", "test@test.com")
+                )
+                .andExpect(status().isForbidden())
                 .andDo(print());
     }
 

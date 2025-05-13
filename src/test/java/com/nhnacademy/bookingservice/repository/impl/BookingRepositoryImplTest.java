@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -21,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,9 +72,8 @@ class BookingRepositoryImplTest {
         manager.persistAndFlush(booking1);
 
         Optional<BookingResponse> optional = bookingRepository.findByNo(1L);
+        assertTrue(optional.isPresent());
         BookingResponse response = optional.get();
-
-        assertNotNull(response);
         assertAll(() -> {
             assertEquals("test1", response.getCode());
             assertNull(response.getChangeName());
@@ -188,38 +191,37 @@ class BookingRepositoryImplTest {
         });
     }
 
-    @Test
-    @DisplayName("예약 중복 체크 - 시간이 같은 경우")
-    void existsRoomNoAndDate_true_case1() {
-        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+    @ParameterizedTest
+    @MethodSource("provideBookingAndDate")
+    @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우")
+    void existsRoomNoAndDate_true(Booking booking, LocalDateTime targetDate) {
         manager.persistAndFlush(booking);
 
-        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T09:30:00"));
+        boolean actual = bookingRepository.existsRoomNoAndDate(2L, targetDate);
 
         assertTrue(actual);
     }
 
-    @Test
-    @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우1")
-    void existsRoomNoAndDate_true_case2() {
-        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
-        manager.persistAndFlush(booking);
-
-        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:00:00"));
-
-        assertTrue(actual);
+    private static Stream<Arguments> provideBookingAndDate() {
+        return Stream.of(
+                Arguments.of(
+                        Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8,
+                                LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L),
+                        LocalDateTime.parse("2025-04-29T09:30:00")
+                ),
+                Arguments.of(
+                        Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8,
+                                LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L),
+                        LocalDateTime.parse("2025-04-29T10:00:00")
+                ),
+                Arguments.of(
+                        Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T10:30:00"), 8,
+                                LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L),
+                        LocalDateTime.parse("2025-04-29T10:00:00")
+                )
+        );
     }
 
-    @Test
-    @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우2")
-    void existsRoomNoAndDate_true_case3() {
-        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T10:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
-        manager.persistAndFlush(booking);
-
-        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:00:00"));
-
-        assertTrue(actual);
-    }
 
 
     @Test
@@ -229,6 +231,28 @@ class BookingRepositoryImplTest {
         manager.persistAndFlush(booking);
 
         boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:30:00"));
+
+        assertFalse(actual);
+    }
+
+    @Test
+    @DisplayName("예약 중복 체크 - True")
+    void hasBookingStartingAt_true() {
+        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        manager.persistAndFlush(booking);
+
+        boolean actual = bookingRepository.hasBookingStartingAt(2L, LocalDateTime.parse("2025-04-29T09:30:00"));
+
+        assertTrue(actual);
+    }
+
+    @Test
+    @DisplayName("예약 중복 체크 - False")
+    void hasBookingStartingAt_false() {
+        Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
+        manager.persistAndFlush(booking);
+
+        boolean actual = bookingRepository.hasBookingStartingAt(2L, LocalDateTime.parse("2025-04-29T10:30:00"));
 
         assertFalse(actual);
     }

@@ -146,7 +146,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     }
 
     @Override
-    public boolean existsBooking(Long roomNo, LocalDateTime date) {
+    public boolean hasBookingStartingAt(Long roomNo, LocalDateTime date) {
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         Long exist = query.select(qBooking.count())

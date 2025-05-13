@@ -34,17 +34,18 @@ public class ApplicationStartListener implements ApplicationListener<Application
         bookingChangeRepository.save(bookingChange3);
         bookingChangeRepository.save(bookingChange4);
 
-        for(int i=1; i < 10; i++){
-            Booking booking = Booking.ofNewBooking("test"+i, LocalDateTime.parse("2025-05-0%sT09:30:00".formatted(i)), 8, LocalDateTime.parse("2025-05-0%sT10:30:00".formatted(i)), 1L, null, 1L);
-            bookingRepository.save(booking);
-
-        }
         Booking booking2 = Booking.ofNewBooking("test10", LocalDateTime.parse("2025-05-10T13:30:00"), 5, LocalDateTime.parse("2025-05-10T14:30:00"), 1L, null, 1L);
         Booking booking3 = Booking.ofNewBooking("test11", LocalDateTime.parse("2025-05-11T13:30:00"), 5, LocalDateTime.parse("2025-05-11T14:30:00"), 1L, null, 1L);
-//        Booking booking3 = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T16:30:00"), 5, LocalDateTime.parse("2025-04-29T17:30:00"), 1L, null, 2L);
+        Booking booking4 = Booking.ofNewBooking("test12", LocalDateTime.parse("2025-04-29T16:30:00"), 5, LocalDateTime.parse("2025-04-29T17:30:00"), 1L, null, 2L);
 
         bookingRepository.save(booking2);
         bookingRepository.save(booking3);
+        bookingRepository.save(booking4);
 
+        for(int i=1; i < 10; i++){
+            Booking booking = Booking.ofNewBooking("test"+i, LocalDateTime.parse("2025-05-1%sT09:30:00".formatted(i)), 8, LocalDateTime.parse("2025-05-1%sT10:30:00".formatted(i)), 1L, null, 1L);
+            bookingRepository.save(booking);
+
+        }
     }
 }
