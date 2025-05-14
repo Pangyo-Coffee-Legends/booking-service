@@ -7,33 +7,35 @@ import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 import com.nhnacademy.bookingservice.controller.BookingController;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindException;
-import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @RestControllerAdvice(basePackageClasses = BookingController.class)
 public class CommonAdvice {
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<CommonErrorResponse> bindExceptionHandler(BindException e, HttpServletRequest request) {
-        log.error(e.getMessage(), e);
 
-        List<String> erros = new ArrayList<>();
-        e.getBindingResult().getAllErrors().forEach(error -> {
-            if(error instanceof FieldError fieldError){
-                erros.add("%s : %s".formatted(fieldError.getField(),fieldError.getDefaultMessage()));
-            }
-        });
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<CommonErrorResponse> methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e, HttpServletRequest request) {
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST.hashCode(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(commonErrorResponse);
+    }
 
-        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(Strings.join(erros,','), HttpStatus.BAD_REQUEST.hashCode(), request.getRequestURI());
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<CommonErrorResponse> missingRequestHeaderExceptionHandler(MissingRequestHeaderException e, HttpServletRequest request) {
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
+                e.getMessage(),
+                HttpStatus.BAD_REQUEST.hashCode(),
+                request.getRequestURI()
+        );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(commonErrorResponse);
     }
 
@@ -48,16 +50,6 @@ public class CommonAdvice {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<CommonErrorResponse> missingRequestHeaderExceptionHandler(MissingRequestHeaderException e, HttpServletRequest request){
-        CommonErrorResponse errorResponse = new CommonErrorResponse(
-                e.getMessage(),
-                HttpStatus.UNAUTHORIZED.value(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-    }
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<CommonErrorResponse> forbiddenExceptionHandler(ForbiddenException e, HttpServletRequest request){
         CommonErrorResponse errorResponse = new CommonErrorResponse(

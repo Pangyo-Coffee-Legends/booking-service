@@ -9,7 +9,11 @@ import com.nhnacademy.bookingservice.entity.BookingChangeType;
 import com.nhnacademy.bookingservice.entity.QBooking;
 import com.nhnacademy.bookingservice.entity.QBookingChange;
 import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
+import com.nhnacademy.bookingservice.repository.util.QueryDslUtil;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
@@ -31,58 +35,64 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     QBooking qBooking = QBooking.booking;
     QBookingChange qBookingChange = QBookingChange.bookingChange;
 
+    PathBuilder<Booking> entityPath = new PathBuilder<>(Booking.class, "booking");
+
+    private JPAQuery<BookingResponse> getBookingQuery(JPAQueryFactory queryFactory) {
+        return queryFactory
+                .select(new QBookingResponse(
+                        qBooking.bookingNo,
+                        qBooking.bookingCode,
+                        qBooking.bookingDate,
+                        qBooking.attendeeCount,
+                        qBooking.finishesAt,
+                        qBooking.createdAt,
+                        qBooking.mbNo,
+                        qBooking.bookingChange.name.as("changeName"),
+                        qBooking.roomNo
+                ))
+                .from(qBooking)
+                .leftJoin(qBooking.bookingChange, qBookingChange);
+    }
+
     @Override
     public Optional<BookingResponse> findByNo(Long no){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        return Optional.ofNullable(query
-                .select(new QBookingResponse(
-                            qBooking.bookingNo,
-                            qBooking.bookingCode,
-                            qBooking.bookingDate,
-                            qBooking.attendeeCount,
-                            qBooking.finishesAt,
-                            qBooking.createdAt,
-                            qBooking.mbNo,
-                            qBooking.bookingChange.name.as("changeName"),
-                            qBooking.roomNo
-                        )
-                )
-                .from(qBooking)
-                .leftJoin(qBooking.bookingChange, qBookingChange)
+        return Optional.ofNullable(getBookingQuery(query)
                 .where(qBooking.bookingNo.eq(no))
                 .orderBy(qBooking.createdAt.desc())
                 .fetchOne());
     }
 
+    @Override
+    public List<BookingResponse> findBookingList(Long mbNo){
+        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+
+        return getBookingQuery(query)
+                .where(whereExpression(mbNo))
+//                .orderBy(qBooking.createdAt.desc())
+                .fetch();
+    }
 
     @Override
     public Page<BookingResponse> findBookings(Long mbNo, Pageable pageable){
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+        JPAQueryFactory queryFactory = new JPAQueryFactory(getEntityManager());
+        JPAQuery<BookingResponse> query = getBookingQuery(queryFactory)
+                .where(whereExpression(mbNo));
+
+
+        List<OrderSpecifier> orderSpecifiers = QueryDslUtil.getOrderSpecifiers(pageable, entityPath);
 
         List<BookingResponse> bookingList = query
-                .select(new QBookingResponse(
-                                qBooking.bookingNo,
-                                qBooking.bookingCode,
-                                qBooking.bookingDate,
-                                qBooking.attendeeCount,
-                                qBooking.finishesAt,
-                                qBooking.createdAt,
-                                qBooking.mbNo,
-                                qBooking.bookingChange.name.as("changeName"),
-                                qBooking.roomNo
-                        )
-                )
-                .from(qBooking)
-                .leftJoin(qBooking.bookingChange, qBookingChange)
-                .where(whereExpression(mbNo))
-                .orderBy(qBooking.createdAt.desc())
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        JPAQuery<Long> count = query.select(qBooking.count())
-                                    .from(qBooking);
+        JPAQuery<Long> count = queryFactory.select(qBooking.count())
+                .from(qBooking)
+                .where(whereExpression(mbNo));
+
 
         return PageableExecutionUtils.getPage(bookingList, pageable, count::fetchOne);
     }
@@ -97,6 +107,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
         return booleanBuilder;
     }
 
+    @Override
     public List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
@@ -127,7 +138,22 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
         Long exist = query.select(qBooking.count())
                 .from(qBooking)
-                .where(qBooking.roomNo.eq(roomNo).and(qBooking.bookingDate.eq(date)))
+                .where(qBooking.roomNo.eq(roomNo),
+                        qBooking.bookingDate.lt(date.plusHours(1)),
+                        qBooking.finishesAt.gt(date)
+                )
+                .fetchOne();
+
+        return exist != null && exist > 0;
+    }
+
+    @Override
+    public boolean hasBookingStartingAt(Long roomNo, LocalDateTime date) {
+        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
+
+        Long exist = query.select(qBooking.count())
+                .from(qBooking)
+                .where(qBooking.roomNo.eq(roomNo), qBooking.bookingDate.eq(date))
                 .fetchOne();
 
         return exist != null && exist > 0;
