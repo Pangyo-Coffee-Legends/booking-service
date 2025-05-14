@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
 @Getter
+@SuppressWarnings("unused")
 public class BookingCreatedEvent extends ApplicationEvent {
 
     private final String email;

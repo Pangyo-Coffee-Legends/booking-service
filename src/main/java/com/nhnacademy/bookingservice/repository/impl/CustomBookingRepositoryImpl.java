@@ -69,7 +69,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
         return getBookingQuery(query)
                 .where(whereExpression(mbNo))
-                .orderBy(qBooking.createdAt.desc())
+//                .orderBy(qBooking.createdAt.desc())
                 .fetch();
     }
 

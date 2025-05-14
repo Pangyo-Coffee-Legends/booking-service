@@ -6,6 +6,7 @@ import lombok.*;
 @ToString
 @AllArgsConstructor
 @EqualsAndHashCode
+@SuppressWarnings("unused")
 public class MemberResponse {
     private Long no;
 

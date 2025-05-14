@@ -8,6 +8,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @AllArgsConstructor
+@SuppressWarnings("unused")
 public class EmailRequest {
 
     private String to;

@@ -179,7 +179,7 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
-        if(bookingRepository.hasBookingStartingAt(booking.getRoomNo(), booking.getFinishedAt().plusMinutes(30))){
+        if(bookingRepository.existsRoomNoAndDate(booking.getRoomNo(), booking.getFinishedAt())){
             throw new AlreadyMeetingRoomTimeException();
         }
 

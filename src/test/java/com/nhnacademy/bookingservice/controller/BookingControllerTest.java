@@ -3,10 +3,10 @@ package com.nhnacademy.bookingservice.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
+import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,7 +133,7 @@ class BookingControllerTest {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(memberAdaptor.getMember("test@test.com")).thenThrow(MemberNotFoundException.class);
+        when(memberAdaptor.getMember("test@test.com")).thenThrow(NotFoundException.class);
         when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                         post("/api/v1/bookings")
