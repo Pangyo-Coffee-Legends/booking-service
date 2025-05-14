@@ -1,28 +1,56 @@
 package com.nhnacademy.bookingservice.dto;
 
-import lombok.Value;
+import com.querydsl.core.annotations.QueryProjection;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Value
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class BookingResponse {
 
-    Long no;
+    private Long no;
 
-    String code;
+    private String code;
 
-    LocalDateTime date;
+    @EqualsAndHashCode.Exclude
+    private LocalDateTime date;
 
-    Integer attendees;
+    private Integer attendeeCount;
 
-    LocalDateTime finishedAt;
+    @EqualsAndHashCode.Exclude
+    private LocalDateTime finishedAt;
 
-    LocalDateTime createdAt;
+    @EqualsAndHashCode.Exclude
+    private LocalDateTime createdAt;
 
-    String mbName;
+    private Long mbNo;
 
-    String changeName;
+    @Setter
+    private String mbName;
 
-    String roomName;
+    @Setter
+    private String email;
 
+    private String changeName;
+
+    private Long roomNo;
+
+    @Setter
+    private String roomName;
+
+    @QueryProjection
+    public BookingResponse(Long no, String code, LocalDateTime date, Integer attendeeCount, LocalDateTime finishedAt, LocalDateTime createdAt, Long mbNo, String changeName, Long roomNo) {
+        this.no = no;
+        this.code = code;
+        this.date = date;
+        this.attendeeCount = attendeeCount;
+        this.finishedAt = finishedAt;
+        this.createdAt = createdAt;
+        this.mbNo = mbNo;
+        this.changeName = changeName;
+        this.roomNo = roomNo;
+    }
 }
