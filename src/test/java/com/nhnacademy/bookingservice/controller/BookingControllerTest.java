@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -355,9 +356,8 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회 - 회의실 날짜별")
     void getDailyBookings() throws Exception {
-        DailyBookingResponse response1 = new DailyBookingResponse(1L, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
-        DailyBookingResponse response2 = new DailyBookingResponse(2L, LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"));
-
+        DailyBookingResponse response1 = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
+        DailyBookingResponse response2 = new DailyBookingResponse(2L, 1L, 8, LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"));
 
         when(bookingService.getDailyBookings(2L, LocalDate.parse("2025-04-29"))).thenReturn(List.of(response1, response2));
 
@@ -368,11 +368,11 @@ class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].no").value(1L))
-                .andExpect(jsonPath("$[0].date").value("2025-04-29T09:30:00"))
-                .andExpect(jsonPath("$[0].finishedAt").value("2025-04-29T10:30:00"))
+                .andExpect(jsonPath("$[0].startsAt").value("2025-04-29T09:30:00"))
+                .andExpect(jsonPath("$[0].finishesAt").value("2025-04-29T10:30:00"))
                 .andExpect(jsonPath("$[1].no").value(2L))
-                .andExpect(jsonPath("$[1].date").value("2025-04-29T10:30:00"))
-                .andExpect(jsonPath("$[1].finishedAt").value("2025-04-29T11:30:00"))
+                .andExpect(jsonPath("$[1].startsAt").value("2025-04-29T10:30:00"))
+                .andExpect(jsonPath("$[1].finishesAt").value("2025-04-29T11:30:00"))
                 .andDo(print());
     }
 
@@ -469,7 +469,7 @@ class BookingControllerTest {
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(entryResponse.getCode()))
-                .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().toString()))
+                .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
                 .andExpect(jsonPath("$.meetingRoomNo").value(entryResponse.getMeetingRoomNo()))
                 .andDo(print());
     }
@@ -568,7 +568,7 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.uri").value(String.format("/api/v1/bookings/%d/enter", 1)))
                 .andDo(print());
     }
-  
+
     @Test
     @DisplayName("본인인증")
     void verify() throws Exception {

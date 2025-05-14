@@ -21,7 +21,7 @@ public class BookingResponse {
     private Integer attendeeCount;
 
     @EqualsAndHashCode.Exclude
-    private LocalDateTime finishedAt;
+    private LocalDateTime finishesAt;
 
     @EqualsAndHashCode.Exclude
     private LocalDateTime createdAt;
@@ -42,12 +42,12 @@ public class BookingResponse {
     private String roomName;
 
     @QueryProjection
-    public BookingResponse(Long no, String code, LocalDateTime date, Integer attendeeCount, LocalDateTime finishedAt, LocalDateTime createdAt, Long mbNo, String changeName, Long roomNo) {
+    public BookingResponse(Long no, String code, LocalDateTime date, Integer attendeeCount, LocalDateTime finishesAt, LocalDateTime createdAt, Long mbNo, String changeName, Long roomNo) {
         this.no = no;
         this.code = code;
         this.date = date;
         this.attendeeCount = attendeeCount;
-        this.finishedAt = finishedAt;
+        this.finishesAt = finishesAt;
         this.createdAt = createdAt;
         this.mbNo = mbNo;
         this.changeName = changeName;

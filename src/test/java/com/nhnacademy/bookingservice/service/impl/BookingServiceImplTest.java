@@ -67,7 +67,7 @@ class BookingServiceImplTest {
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
 
-        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
 
     }
 
@@ -260,7 +260,7 @@ class BookingServiceImplTest {
     @DisplayName("예약 날짜별 조회")
     void getDailyBookings() {
 
-        DailyBookingResponse response = new DailyBookingResponse(1L, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
+        DailyBookingResponse response = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
         when(bookingRepository.findBookingsByDate(Mockito.anyLong(), Mockito.any())).thenReturn(List.of(response));
 
         List<DailyBookingResponse> responseList =  bookingService.getDailyBookings(1L, LocalDate.parse("2025-04-29"));
@@ -455,7 +455,7 @@ class BookingServiceImplTest {
         String code = "testCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
-        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
@@ -464,7 +464,7 @@ class BookingServiceImplTest {
                 code,
                 date,
                 attendeeCount,
-                finishedAt,
+                finishesAt,
                 LocalDateTime.now(),
                 mbNo,
                 null,
@@ -488,7 +488,7 @@ class BookingServiceImplTest {
         String code = "testCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
-        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
@@ -497,7 +497,7 @@ class BookingServiceImplTest {
                 code,
                 date,
                 attendeeCount,
-                finishedAt,
+                finishesAt,
                 LocalDateTime.now(),
                 mbNo,
                 null,
@@ -526,7 +526,7 @@ class BookingServiceImplTest {
         String code = "testCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
-        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
@@ -535,7 +535,7 @@ class BookingServiceImplTest {
                 code,
                 date,
                 attendeeCount,
-                finishedAt,
+                finishesAt,
                 LocalDateTime.now(),
                 mbNo,
                 null,
@@ -561,7 +561,7 @@ class BookingServiceImplTest {
         String code = "testCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
-        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
@@ -570,7 +570,7 @@ class BookingServiceImplTest {
                 code,
                 date,
                 attendeeCount,
-                finishedAt,
+                finishesAt,
                 LocalDateTime.now(),
                 mbNo,
                 null,
@@ -596,7 +596,7 @@ class BookingServiceImplTest {
         String code = "testCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
-        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
@@ -605,7 +605,7 @@ class BookingServiceImplTest {
                 code,
                 date,
                 attendeeCount,
-                finishedAt,
+                finishesAt,
                 LocalDateTime.now(),
                 mbNo,
                 null,

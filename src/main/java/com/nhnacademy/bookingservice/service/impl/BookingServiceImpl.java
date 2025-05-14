@@ -154,7 +154,19 @@ public class BookingServiceImpl implements BookingService{
     @Override
     @Transactional(readOnly = true)
     public List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date) {
-        return bookingRepository.findBookingsByDate(roomNo, date);
+        List<DailyBookingResponse> bookings = bookingRepository.findBookingsByDate(roomNo, date);
+
+        for (DailyBookingResponse booking : bookings) {
+
+            MemberResponse member = memberAdaptor.getMemberByMbNo(booking.getMbNo());
+
+            if (member != null) {
+                String mbName = member.getName();
+                booking.setMbName(mbName);
+            }
+        }
+
+        return bookings;
     }
 
     @Override
@@ -182,7 +194,7 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
-        if(bookingRepository.existsRoomNoAndDate(booking.getRoomNo(), booking.getFinishedAt())){
+        if(bookingRepository.existsRoomNoAndDate(booking.getRoomNo(), booking.getFinishesAt())){
             throw new AlreadyMeetingRoomTimeException();
         }
 
@@ -190,7 +202,8 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.EXTEND.getId()));
 
         booking.updateBookingEvent(change);
-        booking.updateFinishedAt(booking.getFinishedAt().plusMinutes(30));
+        booking.updateFinishesAt(booking.getFinishesAt().plusMinutes(30));
+
     }
 
     @Override
@@ -217,7 +230,7 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CANCEL.getId()));
 
         booking.updateBookingEvent(change);
-        booking.updateFinishedAt(null);
+        booking.updateFinishesAt(null);
 
         publisher.publishEvent(new BookingCancelEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
     }
@@ -289,7 +302,7 @@ public class BookingServiceImpl implements BookingService{
                 booking.getBookingCode(),
                 booking.getBookingDate(),
                 booking.getAttendeeCount(),
-                booking.getFinishedAt(),
+                booking.getFinishesAt(),
                 booking.getCreatedAt(),
                 booking.getMbNo(),
                 mbName,

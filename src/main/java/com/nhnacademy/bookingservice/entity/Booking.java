@@ -33,9 +33,9 @@ public class Booking {
     @Comment("예약인원")
     private Integer attendeeCount;
 
-    @Column(name = "finished_at", nullable = true)
+    @Column(name = "finishes_at", nullable = true)
     @Comment("회의종료시간")
-    private LocalDateTime finishedAt;
+    private LocalDateTime finishesAt;
 
     @Column(name = "created_at", nullable = false)
     @Comment("생성시간")
@@ -59,24 +59,24 @@ public class Booking {
        this.createdAt = LocalDateTime.now();
    }
 
-    private Booking(String bookingCode, LocalDateTime bookingDate, Integer attendeeCount, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
+    private Booking(String bookingCode, LocalDateTime bookingDate, Integer attendeeCount, LocalDateTime finishesAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
         this.bookingCode = bookingCode;
         this.bookingDate = bookingDate;
         this.attendeeCount = attendeeCount;
-        this.finishedAt = finishedAt;
+        this.finishesAt = finishesAt;
         this.mbNo = mbNo;
         this.bookingChange = bookingChange;
         this.roomNo = roomNo;
     }
 
-    public static Booking ofNewBooking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long mbNo, BookingChange bookingChange, Long roomNo){
-       return new Booking(code, date, attendees, finishedAt, mbNo, bookingChange, roomNo);
+    public static Booking ofNewBooking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishesAt, Long mbNo, BookingChange bookingChange, Long roomNo){
+       return new Booking(code, date, attendees, finishesAt, mbNo, bookingChange, roomNo);
     }
 
-    public void update(LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long roomNo){
+    public void update(LocalDateTime date, Integer attendees, LocalDateTime finishesAt, Long roomNo){
        this.bookingDate = date;
        this.attendeeCount = attendees;
-       this.finishedAt = finishedAt;
+       this.finishesAt = finishesAt;
        this.roomNo = roomNo;
     }
 
@@ -84,7 +84,7 @@ public class Booking {
        this.bookingChange = bookingChange;
     }
 
-    public void updateFinishedAt(LocalDateTime finishedAt){
-       this.finishedAt = finishedAt;
+    public void updateFinishesAt(LocalDateTime finishesAt){
+       this.finishesAt = finishesAt;
     }
 }

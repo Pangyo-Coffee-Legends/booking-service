@@ -140,7 +140,7 @@ class BookingRepositoryImplTest {
         Booking booking = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
-        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishedAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
 
         Page<BookingResponse> response = bookingRepository.findBookings(1L, Pageable.ofSize(1));
 
@@ -242,11 +242,11 @@ class BookingRepositoryImplTest {
         assertAll(() -> {
             assertEquals(2, response.size());
             assertEquals(1L, response.getFirst().getNo());
-            assertEquals(LocalDateTime.parse("2025-04-29T09:30:00"), response.getFirst().getDate());
-            assertEquals(LocalDateTime.parse("2025-04-29T10:30:00"), response.getFirst().getFinishedAt());
+            assertEquals(LocalDateTime.parse("2025-04-29T09:30:00"), response.getFirst().getStartsAt());
+            assertEquals(LocalDateTime.parse("2025-04-29T10:30:00"), response.getFirst().getFinishesAt());
             assertEquals(2L, response.get(1).getNo());
-            assertEquals(LocalDateTime.parse("2025-04-29T10:30:00"), response.get(1).getDate());
-            assertEquals(LocalDateTime.parse("2025-04-29T11:30:00"), response.get(1).getFinishedAt());
+            assertEquals(LocalDateTime.parse("2025-04-29T10:30:00"), response.get(1).getStartsAt());
+            assertEquals(LocalDateTime.parse("2025-04-29T11:30:00"), response.get(1).getFinishesAt());
         });
     }
 

@@ -13,7 +13,7 @@
 --                             `booking_date`	DATETIME	NOT NULL,
 --                             `attendee_count`	INT	NOT NULL,
 --                             `created_at`	DATETIME	NOT NULL,
---                             `finished_at`	DATETIME	NULL
+--                             `finishes_at`	DATETIME	NULL
 -- );
 --
 -- CREATE TABLE `booking_changes` (
@@ -45,7 +45,7 @@
 --
 -- INSERT INTO `bookings` (
 --     `booking_no`, `meeting_room_no`, `mb_no`, `changes_no`,
---     `booking_code`, `booking_date`, `attendee_count`, `created_at`, `finished_at`
+--     `booking_code`, `booking_date`, `attendee_count`, `created_at`, `finishes_at`
 -- ) VALUES
 --       (1, 1, 1001, NULL, 'ABC123', '2025-04-25 09:00:00', 8, '2025-04-20 10:00:00', NULL),
 --       (2, 2, 1002, 1, 'DEF456', '2025-04-26 14:00:00', 12, '2025-04-21 11:00:00', '2025-04-26 16:00:00'),

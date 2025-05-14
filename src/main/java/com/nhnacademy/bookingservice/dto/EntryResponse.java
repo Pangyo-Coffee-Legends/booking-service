@@ -12,6 +12,7 @@ public class EntryResponse {
 
     private String code;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime entryTime;
 
     private Long meetingRoomNo;
