@@ -26,13 +26,13 @@ public interface BookingService {
      *
      * @param bookingRegisterRequest 예약 등록 요청 정보를 담은 객체
      */
-    BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest);
+    BookingRegisterResponse register(BookingRegisterRequest bookingRegisterRequest, MemberResponse memberInfo);
 
     /**
-     * 예약 번호와 회원 정보를 기반으로 예약 정보를 조회합니다.
+     * 예약 번호와 사용자 정보를 기반으로 예약 정보를 조회합니다.
      *
      * @param no 예약 번호
-     * @param memberInfo 회원 정보
+     * @param memberInfo 예약한 사용자 정보
      * @return 조회된 예약 정보
      */
     BookingResponse getBooking(Long no, MemberResponse memberInfo);
@@ -40,29 +40,53 @@ public interface BookingService {
     /**
      * 예약 목록을 페이징 처리하여 조회합니다.
      *
-     * @param memberResponse 예약한 사용자 정보
-     * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
+     * @param memberInfo 예약한 사용자 정보
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    Page<BookingResponse> getBookingsByMember(MemberResponse memberResponse, Pageable pageable);
+    List<BookingResponse> getMemberBookings(MemberResponse memberInfo);
+
+    /**
+     * 예약 전체 목록을 페이징 처리하여 조회합니다.
+     *
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     */
+    List<BookingResponse> getBookings();
+
+    /**
+     * 예약 목록을 페이징 처리하여 조회합니다.
+     *
+     * @param memberInfo 예약한 사용자 정보
+     * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
+     */
+    Page<BookingResponse> getPagedMemberBookings(MemberResponse memberInfo, Pageable pageable);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
      *
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
-     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
+     * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
-    Page<BookingResponse> getAllBookings(Pageable pageable);
+    Page<BookingResponse> getPagedBookings(Pageable pageable);
 
+    /**
+     * 지정한 회의실 번호와 날짜를 기준으로 하루 동안의 예약 목록을 조회합니다.
+     *
+     * @param roomNo 회의실 번호
+     * @param date 조회할 날짜
+     * @return 해당 날짜의 예약 목록
+     */
     List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date);
+
     /**
      * 예약 정보를 수정합니다.
      *
      * @param no 예약 번호
      * @param request 예약 수정 요청 정보를 담은 객체
+     * @param memberInfo 예약한 사용자 정보
      * @return 수정된 예약 정보
      */
-    BookingResponse updateBooking(Long no, BookingUpdateRequest request);
+    BookingResponse updateBooking(Long no, BookingUpdateRequest request, MemberResponse memberInfo);
 
     /**
      * 예약을 연장 합니다.
@@ -82,9 +106,21 @@ public interface BookingService {
      * 예약을 취소합니다.
      *
      * @param no 예약 번호
+     * @param memberInfo 예약한 사용자 정보
      */
     void cancelBooking(Long no, MemberResponse memberInfo);
 
+
     boolean checkBooking(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo);
+
+    /**
+     * 본인 인증 합니다.
+     *
+     * @param no 예약 번호
+     * @param request 비밀번호 정보
+     * @param memberInfo 예약한 사용자 정보
+     */
+    boolean verify(Long no, ConfirmPasswordRequest request, MemberResponse memberInfo);
+
 }
 

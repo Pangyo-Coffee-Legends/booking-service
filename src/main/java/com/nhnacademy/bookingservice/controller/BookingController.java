@@ -1,8 +1,6 @@
 package com.nhnacademy.bookingservice.controller;
 
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * {@code BookingController}는 예약(Booking) 관련 요청을 처리하는 REST 컨트롤러입니다.
@@ -42,17 +41,11 @@ public class BookingController {
      * @param email 사용자 이메일 (요청 헤더 "X-USER"로 전달)
      * @return 사용자 정보
      * @throws feign.FeignException.Unauthorized 이메일이 없을 경우
-     * @throws MemberNotFoundException 사용자 조회 실패 시
      * @see com.nhnacademy.bookingservice.common.advice.CommonAdvice 공통 예외 처리
      */
     @ModelAttribute("memberInfo")
     public MemberResponse getMemberInfo(@RequestHeader("X-USER") String email){
-        ResponseEntity<MemberResponse> responseEntity = memberAdaptor.getMember(email);
-        if (!responseEntity.getStatusCode().is2xxSuccessful() || responseEntity.getBody() == null) {
-            throw new MemberNotFoundException();
-        }
-        MemberThreadLocal.setMemberNoLocal(responseEntity.getBody().getNo());
-        return responseEntity.getBody();
+        return  memberAdaptor.getMember(email);
     }
 
     /**
@@ -62,8 +55,8 @@ public class BookingController {
      * @return 201 Created 응답
      */
     @PostMapping
-    public ResponseEntity<BookingRegisterResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request){
-        BookingRegisterResponse response = bookingService.register(request);
+    public ResponseEntity<BookingRegisterResponse> registerBooking(@Validated @RequestBody BookingRegisterRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        BookingRegisterResponse response = bookingService.register(request, memberInfo);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -80,18 +73,67 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/my")
+    /**
+     * 로그인한 회원의 예약 통계 목록을 조회합니다.
+     *
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 로그인한 회원의 예약 목록
+     */
+    @GetMapping("/me/statistics")
+    public ResponseEntity<List<BookingResponse>> getBookingsByMember(@ModelAttribute("memberInfo") MemberResponse memberInfo){
+        List<BookingResponse> responses = bookingService.getMemberBookings(memberInfo);
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 전체 회원의 예약 통계 목록을 조회합니다.
+     * 관리자만 접근 가능합니다.
+     *
+     * @return 전체 예약 목록
+     */
+    @GetMapping("/statistics")
+    public ResponseEntity<List<BookingResponse>> getAllBookings(){
+        List<BookingResponse> responses = bookingService.getBookings();
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 로그인한 회원의 예약 목록(페이지네이션 포함)을 조회합니다.
+     *
+     * @param pageable 페이징 정보
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 로그인한 회원의 예약 목록 페이지
+     */
+    @GetMapping("/me")
     public ResponseEntity<Page<BookingResponse>> getBookingsByMember(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
-        Page<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
+        Page<BookingResponse> responses = bookingService.getPagedMemberBookings(memberInfo, pageable);
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 전체 회원의 예약 목록(페이지네이션 포함)을 조회합니다.
+     * 관리자만 접근 가능합니다.
+     *
+     * @param pageable 페이징 정보
+     * @param memberInfo 요청 헤더 "X-USER"를 통해 주입된 회원 정보
+     * @return 전체 예약 목록 페이지
+     */
     @GetMapping
-    public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable){
-        Page<BookingResponse> responses = bookingService.getAllBookings(pageable);
+    public ResponseEntity<Page<BookingResponse>> getAllBookings(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        Page<BookingResponse> responses = bookingService.getPagedBookings(pageable);
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * 특정 회의실의 특정 날짜에 해당하는 예약 목록을 조회합니다.
+     *
+     * @param roomNo 회의실 번호
+     * @param date 조회할 날짜 (yyyy-MM-dd 형식)
+     * @return 해당 회의실의 일일 예약 목록
+     */
     @GetMapping("/meeting-rooms/{roomNo}/date/{date}")
     public ResponseEntity<List<DailyBookingResponse>> getDailyBookings(@PathVariable("roomNo")Long roomNo, @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         List<DailyBookingResponse> responses = bookingService.getDailyBookings(roomNo, date);
@@ -106,8 +148,8 @@ public class BookingController {
      * @return 수정된 예약 정보
      */
     @PutMapping("/{no}")
-    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request){
-        BookingResponse response = bookingService.updateBooking(no, request);
+    public ResponseEntity<BookingResponse> updateBooking(@PathVariable("no") Long no, @Validated @RequestBody BookingUpdateRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo){
+        BookingResponse response = bookingService.updateBooking(no, request, memberInfo);
         return ResponseEntity.ok(response);
     }
 
@@ -147,7 +189,6 @@ public class BookingController {
         bookingService.cancelBooking(no, memberInfo);
         return ResponseEntity.noContent().build();
     }
-
     /**
      * 회의실 사용 예약을 확인하고, 해당 회의실 예약 정보를 반환합니다.
      *
@@ -173,4 +214,9 @@ public class BookingController {
         }
     }
 
+    @PostMapping("/{no}/verify")
+    public ResponseEntity<Boolean> verifyPassword(@PathVariable("no") Long no, @Validated @RequestBody ConfirmPasswordRequest request, @ModelAttribute("memberInfo") MemberResponse memberInfo) {
+        Boolean valid =  bookingService.verify(no, request, memberInfo);
+        return ResponseEntity.ok(valid);
+    }
 }

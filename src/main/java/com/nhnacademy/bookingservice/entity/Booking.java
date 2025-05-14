@@ -49,7 +49,7 @@ public class Booking {
     @Comment("회의실번호")
     private Long roomNo;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
     @Comment("특이사항번호")
     private BookingChange bookingChange;
@@ -73,10 +73,11 @@ public class Booking {
        return new Booking(code, date, attendees, finishedAt, mbNo, bookingChange, roomNo);
     }
 
-    public void update(LocalDateTime date, Integer attendees, LocalDateTime finishedAt){
+    public void update(LocalDateTime date, Integer attendees, LocalDateTime finishedAt, Long roomNo){
        this.bookingDate = date;
        this.attendeeCount = attendees;
        this.finishedAt = finishedAt;
+       this.roomNo = roomNo;
     }
 
     public void updateBookingEvent(BookingChange bookingChange){

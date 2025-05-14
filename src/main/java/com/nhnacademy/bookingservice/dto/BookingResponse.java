@@ -31,6 +31,9 @@ public class BookingResponse {
     @Setter
     private String mbName;
 
+    @Setter
+    private String email;
+
     private String changeName;
 
     private Long roomNo;
