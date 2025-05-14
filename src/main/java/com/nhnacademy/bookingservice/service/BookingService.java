@@ -42,14 +42,14 @@ public interface BookingService {
      * @param memberInfo 예약한 사용자 정보
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getBookingsByMember(MemberResponse memberInfo);
+    List<BookingResponse> getMemberBookings(MemberResponse memberInfo);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
      *
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link List} 객체
      */
-    List<BookingResponse> getAllBookings();
+    List<BookingResponse> getBookings();
 
     /**
      * 예약 목록을 페이징 처리하여 조회합니다.
@@ -58,7 +58,7 @@ public interface BookingService {
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
-    Page<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable);
+    Page<BookingResponse> getPagedMemberBookings(MemberResponse memberInfo, Pageable pageable);
 
     /**
      * 예약 전체 목록을 페이징 처리하여 조회합니다.
@@ -66,7 +66,7 @@ public interface BookingService {
      * @param pageable 페이지 번호, 크기, 정렬 정보를 담고 있는 {@link Pageable} 객체
      * @return 조회된 예약 정보 {@link BookingResponse}를 포함하는 {@link Page} 객체
      */
-    Page<BookingResponse> getAllBookings(Pageable pageable);
+    Page<BookingResponse> getPagedBookings(Pageable pageable);
 
     /**
      * 지정한 회의실 번호와 날짜를 기준으로 하루 동안의 예약 목록을 조회합니다.

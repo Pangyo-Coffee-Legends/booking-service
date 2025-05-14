@@ -81,7 +81,7 @@ public class BookingController {
      */
     @GetMapping("/me/statistics")
     public ResponseEntity<List<BookingResponse>> getBookingsByMember(@ModelAttribute("memberInfo") MemberResponse memberInfo){
-        List<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo);
+        List<BookingResponse> responses = bookingService.getMemberBookings(memberInfo);
         return ResponseEntity.ok(responses);
     }
 
@@ -93,7 +93,7 @@ public class BookingController {
      */
     @GetMapping("/statistics")
     public ResponseEntity<List<BookingResponse>> getAllBookings(){
-        List<BookingResponse> responses = bookingService.getAllBookings();
+        List<BookingResponse> responses = bookingService.getBookings();
         return ResponseEntity.ok(responses);
     }
 
@@ -106,7 +106,7 @@ public class BookingController {
      */
     @GetMapping("/me")
     public ResponseEntity<Page<BookingResponse>> getBookingsByMember(@PageableDefault(size = 10) Pageable pageable, @ModelAttribute("memberInfo") MemberResponse memberInfo){
-        Page<BookingResponse> responses = bookingService.getBookingsByMember(memberInfo, pageable);
+        Page<BookingResponse> responses = bookingService.getPagedMemberBookings(memberInfo, pageable);
         return ResponseEntity.ok(responses);
     }
 
@@ -123,7 +123,7 @@ public class BookingController {
         if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        Page<BookingResponse> responses = bookingService.getAllBookings(pageable);
+        Page<BookingResponse> responses = bookingService.getPagedBookings(pageable);
         return ResponseEntity.ok(responses);
     }
 

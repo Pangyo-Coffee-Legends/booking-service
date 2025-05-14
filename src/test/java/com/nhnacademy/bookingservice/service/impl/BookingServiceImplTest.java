@@ -181,7 +181,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findBookingList(1L)).thenReturn(List.of(bookingResponse));
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
-        bookingService.getBookingsByMember(memberInfo);
+        bookingService.getMemberBookings(memberInfo);
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(1L);
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
@@ -194,7 +194,7 @@ class BookingServiceImplTest {
         when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
-        bookingService.getAllBookings();
+        bookingService.getBookings();
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(null);
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
@@ -207,7 +207,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findBookings(1L, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
-        bookingService.getBookingsByMember(memberInfo, Pageable.ofSize(1));
+        bookingService.getPagedMemberBookings(memberInfo, Pageable.ofSize(1));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(1L, Pageable.ofSize(1));
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
@@ -220,7 +220,7 @@ class BookingServiceImplTest {
         when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
-        bookingService.getAllBookings(Pageable.ofSize(1));
+        bookingService.getPagedBookings(Pageable.ofSize(1));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
@@ -234,7 +234,7 @@ class BookingServiceImplTest {
         when(memberAdaptor.getMember(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
-        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getAllBookings(pageable));
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
@@ -248,7 +248,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
-        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getAllBookings(pageable));
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());

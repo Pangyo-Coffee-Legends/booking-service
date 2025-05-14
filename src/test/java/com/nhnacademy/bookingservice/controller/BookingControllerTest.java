@@ -201,7 +201,7 @@ class BookingControllerTest {
         BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
         BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
 
-        when(bookingService.getBookingsByMember(Mockito.any())).thenReturn(List.of(response1, response2));
+        when(bookingService.getMemberBookings(Mockito.any())).thenReturn(List.of(response1, response2));
 
         mockMvc.perform(
                         get("/api/v1/bookings/me/statistics")
@@ -226,7 +226,7 @@ class BookingControllerTest {
         BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
         BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
-        when(bookingService.getAllBookings()).thenReturn(List.of(response1, response2, response3, response4));
+        when(bookingService.getBookings()).thenReturn(List.of(response1, response2, response3, response4));
 
         mockMvc.perform(
                         get("/api/v1/bookings/statistics")
@@ -251,7 +251,7 @@ class BookingControllerTest {
         BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
         BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
 
-        when(bookingService.getBookingsByMember(Mockito.any(),Mockito.any())).thenReturn(new PageImpl<>(List.of(response1, response2)));
+        when(bookingService.getPagedMemberBookings(Mockito.any(),Mockito.any())).thenReturn(new PageImpl<>(List.of(response1, response2)));
 
         mockMvc.perform(
                         get("/api/v1/bookings/me")
@@ -279,7 +279,7 @@ class BookingControllerTest {
         BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
         BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
-        when(bookingService.getAllBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
+        when(bookingService.getPagedBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
 
         mockMvc.perform(
                         get("/api/v1/bookings")
@@ -309,7 +309,7 @@ class BookingControllerTest {
         BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
         BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
-        when(bookingService.getAllBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
+        when(bookingService.getPagedBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
 
         mockMvc.perform(
                         get("/api/v1/bookings")
@@ -331,7 +331,7 @@ class BookingControllerTest {
         BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
         BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
 
-        when(bookingService.getAllBookings(
+        when(bookingService.getPagedBookings(
                 argThat(pageable -> pageable.getSort().getOrderFor("bookingDate") != null
                         && Objects.requireNonNull(pageable.getSort().getOrderFor("bookingDate")).getDirection().isDescending())
         )).thenReturn(new PageImpl<>(List.of(response3, response4, response1, response2)));

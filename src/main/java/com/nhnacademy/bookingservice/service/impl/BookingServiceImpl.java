@@ -87,7 +87,7 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByMember(MemberResponse memberInfo) {
+    public List<BookingResponse> getMemberBookings(MemberResponse memberInfo) {
         List<BookingResponse> bookings = bookingRepository.findBookingList(memberInfo.getNo());
 
         bookings.forEach(booking -> {
@@ -101,7 +101,7 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getAllBookings() {
+    public List<BookingResponse> getBookings() {
         List<BookingResponse> bookings = bookingRepository.findBookingList(null);
 
         bookings.forEach(booking -> {
@@ -117,7 +117,7 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getBookingsByMember(MemberResponse memberInfo, Pageable pageable) {
+    public Page<BookingResponse> getPagedMemberBookings(MemberResponse memberInfo, Pageable pageable) {
         Page<BookingResponse> bookings = bookingRepository.findBookings(memberInfo.getNo(), pageable);
 
         bookings.forEach(booking -> {
@@ -132,7 +132,7 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getAllBookings(Pageable pageable) {
+    public Page<BookingResponse> getPagedBookings(Pageable pageable) {
 
         Page<BookingResponse> bookings = bookingRepository.findBookings(null, pageable);
 
