@@ -1,8 +1,6 @@
 package com.nhnacademy.bookingservice.controller;
 
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.auth.MemberThreadLocal;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
