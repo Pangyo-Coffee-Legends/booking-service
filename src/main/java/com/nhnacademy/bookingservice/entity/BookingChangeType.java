@@ -1,5 +1,6 @@
 package com.nhnacademy.bookingservice.entity;
 
+
 /**
  * 예약 변경 유형을 나타내는 열거형입니다.
  * <p>
@@ -52,6 +53,7 @@ public enum BookingChangeType {
         return id;
     }
 
+
     /**
      * 예약 변경 유형의 이름을 반환합니다.
      *
@@ -60,6 +62,7 @@ public enum BookingChangeType {
     public String getName() {
         return name;
     }
+
 
     /**
      * ID를 기반으로 해당 BookingChangeType을 반환합니다.
@@ -76,6 +79,7 @@ public enum BookingChangeType {
         }
         throw new IllegalArgumentException("유효하지 않는 BookingChangeType id 입니다: " + id);
     }
+
 
     /**
      * 이름을 기반으로 해당 BookingChangeType을 반환합니다.

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -109,6 +110,9 @@ public interface BookingService {
      */
     void cancelBooking(Long no, MemberResponse memberInfo);
 
+
+    boolean checkBooking(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo);
+
     /**
      * 본인 인증 합니다.
      *
@@ -117,5 +121,6 @@ public interface BookingService {
      * @param memberInfo 예약한 사용자 정보
      */
     boolean verify(Long no, ConfirmPasswordRequest request, MemberResponse memberInfo);
+
 }
 

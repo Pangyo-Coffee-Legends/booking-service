@@ -6,10 +6,8 @@ import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
 import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
 import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
+import com.nhnacademy.bookingservice.common.exception.booking.*;
 import com.nhnacademy.bookingservice.common.exception.NotFoundException;
-import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
-import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
-import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.entity.Booking;
@@ -60,6 +58,7 @@ class BookingServiceImplTest {
     MemberResponse memberInfo;
     MeetingRoomResponse meetingRoomResponse;
     BookingResponse bookingResponse;
+
     @BeforeEach
     void setUp() {
         memberInfo = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111", "ROLE_USER");
@@ -146,7 +145,7 @@ class BookingServiceImplTest {
 
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
 
-        Assertions.assertThrows(ForbiddenException.class, () -> bookingService.getBooking(1L, member));
+        assertThrows(ForbiddenException.class, () -> bookingService.getBooking(1L, member));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
@@ -158,7 +157,7 @@ class BookingServiceImplTest {
 
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.empty());
 
-        Assertions.assertThrows(BookingNotFoundException.class, () -> bookingService.getBooking(1L, member));
+        assertThrows(BookingNotFoundException.class, () -> bookingService.getBooking(1L, member));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
@@ -195,7 +194,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
         bookingService.getBookings();
-
+      
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(null);
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
@@ -234,6 +233,7 @@ class BookingServiceImplTest {
         when(memberAdaptor.getMember(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
+
         Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
@@ -248,6 +248,7 @@ class BookingServiceImplTest {
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
+
         Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
@@ -445,4 +446,181 @@ class BookingServiceImplTest {
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
         Mockito.verify(memberAdaptor, Mockito.times(1)).verify(1L, request);
     }
+
+    @Test
+    @DisplayName("회의실 입실")
+    void checkBooking() {
+        // given
+        Long no = 1L;
+        String code = "testCode";
+        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        Integer attendeeCount = 8;
+        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        Long mbNo = 1L;
+        Long roomNo = 1L;
+
+        BookingResponse response = new BookingResponse(
+                no,
+                code,
+                date,
+                attendeeCount,
+                finishedAt,
+                LocalDateTime.now(),
+                mbNo,
+                null,
+                roomNo
+        );
+
+        when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(response));
+
+        // when
+        boolean result = bookingService.checkBooking(no, code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
+
+        // then
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("예약 코드 불일치 시 BookingCodeDoesNotMatchException 발생")
+    void checkBookingCodeFailed() {
+        // given
+        Long no = 1L;
+        String code = "testCode";
+        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        Integer attendeeCount = 8;
+        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        Long mbNo = 1L;
+        Long roomNo = 1L;
+
+        BookingResponse response = new BookingResponse(
+                no,
+                code,
+                date,
+                attendeeCount,
+                finishedAt,
+                LocalDateTime.now(),
+                mbNo,
+                null,
+                roomNo
+        );
+
+        when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+
+        // when
+        // 불일치하는 예약코드 제공
+        String wrongCode = "wrongCode";
+        // 입실 5분 전으로 설정
+        LocalDateTime entryTime = date.minusMinutes(5);
+
+        // then
+        assertThrows(BookingInfoDoesNotMatchException.class, () ->
+                bookingService.checkBooking(1L, wrongCode, entryTime, roomNo)
+        );
+    }
+
+    @Test
+    @DisplayName("입실 날짜가 예약 날짜와 다른 경우 - 입실 불가")
+    void checkBookingDifferentDate() {
+        // given
+        Long no = 1L;
+        String code = "testCode";
+        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        Integer attendeeCount = 8;
+        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        Long mbNo = 1L;
+        Long roomNo = 1L;
+
+        BookingResponse response = new BookingResponse(
+                no,
+                code,
+                date,
+                attendeeCount,
+                finishedAt,
+                LocalDateTime.now(),
+                mbNo,
+                null,
+                roomNo
+        );
+
+        when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+
+        // when
+        LocalDateTime differentDateEntry = LocalDateTime.parse("2025-04-30T09:30:00");
+
+        // then
+        assertThrows(BookingInfoDoesNotMatchException.class, () ->
+                bookingService.checkBooking(no, code, differentDateEntry, roomNo)
+        );
+    }
+
+    @Test
+    @DisplayName("입실이 예약시간보다 10분 이상 빠른 경우 - 입실 불가")
+    void checkBookingEarlyEntry() {
+        // given
+        Long no = 1L;
+        String code = "testCode";
+        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        Integer attendeeCount = 8;
+        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        Long mbNo = 1L;
+        Long roomNo = 1L;
+
+        BookingResponse response = new BookingResponse(
+                no,
+                code,
+                date,
+                attendeeCount,
+                finishedAt,
+                LocalDateTime.now(),
+                mbNo,
+                null,
+                roomNo
+        );
+
+        when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+
+        // when
+        // 예약 시간 15분 전 입실 시도
+        LocalDateTime earlyEntry = date.minusMinutes(15);
+
+        assertThrows(BookingTimeNotReachedException.class, () ->
+                bookingService.checkBooking(no, code, earlyEntry, roomNo)
+        );
+    }
+
+    @Test
+    @DisplayName("입실이 예약시간보다 10분 이상 늦은 경우 - 입실 불가")
+    void checkBookingLateEntry() {
+        // given
+        Long no = 1L;
+        String code = "testCode";
+        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        Integer attendeeCount = 8;
+        LocalDateTime finishedAt = LocalDateTime.parse("2025-04-29T10:30:00");
+        Long mbNo = 1L;
+        Long roomNo = 1L;
+
+        BookingResponse response = new BookingResponse(
+                no,
+                code,
+                date,
+                attendeeCount,
+                finishedAt,
+                LocalDateTime.now(),
+                mbNo,
+                null,
+                roomNo
+        );
+
+        when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+
+        // when
+        // 예약 시간 15분 이후 입실 시도
+        LocalDateTime lateEntry = date.plusMinutes(15);
+
+        assertThrows(BookingTimeHasPassedException.class, () ->
+                bookingService.checkBooking(no, code, lateEntry, roomNo)
+        );
+    }
+
 }
