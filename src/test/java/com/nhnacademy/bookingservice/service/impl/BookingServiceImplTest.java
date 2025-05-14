@@ -6,11 +6,11 @@ import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
 import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
 import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
+import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 import com.nhnacademy.bookingservice.common.exception.booking.AlreadyMeetingRoomTimeException;
+import com.nhnacademy.bookingservice.common.exception.booking.BookingChangeNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
-import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomNotFoundException;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.BookingChange;
@@ -167,9 +167,9 @@ class BookingServiceImplTest {
     @DisplayName("예약 조회 - meeting not found")
     void getBooking_exception_case3() {
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
-        when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(MeetingRoomNotFoundException.class);
+        when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
-        Assertions.assertThrows(MeetingRoomNotFoundException.class, () -> bookingService.getBooking(1L, memberInfo));
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getBooking(1L, memberInfo));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
         Mockito.verify(meetingRoomAdaptor, Mockito.times(1)).getMeetingRoom(Mockito.anyLong());
@@ -231,10 +231,10 @@ class BookingServiceImplTest {
     @DisplayName("예약 전체 조회 - memberNotFound")
     void getAllBookings_exception_case1() {
         when(bookingRepository.findBookings(null, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
-        when(memberAdaptor.getMember(Mockito.anyLong())).thenThrow(MemberNotFoundException.class);
+        when(memberAdaptor.getMember(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
-        Assertions.assertThrows(MemberNotFoundException.class, () -> bookingService.getAllBookings(pageable));
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getAllBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
@@ -245,10 +245,10 @@ class BookingServiceImplTest {
     void getAllBookings_exception_case2() {
         when(bookingRepository.findBookings(null, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
         when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
-        when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(MeetingRoomNotFoundException.class);
+        when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
-        Assertions.assertThrows(MeetingRoomNotFoundException.class, () -> bookingService.getAllBookings(pageable));
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.getAllBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
         Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
@@ -294,7 +294,7 @@ class BookingServiceImplTest {
 
     @Test
     @DisplayName("예약 수정 - not found")
-    void updateBooking_exception_case() {
+    void updateBooking_exception_case1() {
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
@@ -336,12 +336,12 @@ class BookingServiceImplTest {
         ReflectionTestUtils.setField(bookingChange, "no", 1L);
 
         when(bookingRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(booking));
-        when(bookingRepository.hasBookingStartingAt(Mockito.anyLong(), Mockito.any())).thenReturn(true);
+        when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.extendBooking(1L));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        Mockito.verify(bookingRepository, Mockito.times(1)).hasBookingStartingAt(Mockito.anyLong(), Mockito.any());
+        Mockito.verify(bookingRepository, Mockito.times(1)).existsRoomNoAndDate(Mockito.anyLong(), Mockito.any());
     }
 
     @Test
@@ -357,6 +357,22 @@ class BookingServiceImplTest {
         when(bookingChangeRepository.findById(BookingChangeType.FINISH.getId())).thenReturn(Optional.of(bookingChange));
 
         bookingService.finishBooking(1L);
+
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
+        Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.FINISH.getId());
+
+    }
+
+    @Test
+    @DisplayName("예약 종료 실패")
+    void finishBooking_exception_case1() {
+        Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
+        ReflectionTestUtils.setField(booking, "bookingNo", 1L);
+
+        when(bookingRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(booking));
+        when(bookingChangeRepository.findById(BookingChangeType.FINISH.getId())).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(BookingChangeNotFoundException.class, () -> bookingService.finishBooking(1L));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
         Mockito.verify(bookingChangeRepository, Mockito.times(1)).findById(BookingChangeType.FINISH.getId());

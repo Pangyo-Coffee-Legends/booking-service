@@ -1,7 +1,6 @@
 package com.nhnacademy.bookingservice.controller;
 
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
-import com.nhnacademy.bookingservice.common.exception.member.MemberNotFoundException;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +41,6 @@ public class BookingController {
      * @param email 사용자 이메일 (요청 헤더 "X-USER"로 전달)
      * @return 사용자 정보
      * @throws feign.FeignException.Unauthorized 이메일이 없을 경우
-     * @throws MemberNotFoundException 사용자 조회 실패 시
      * @see com.nhnacademy.bookingservice.common.advice.CommonAdvice 공통 예외 처리
      */
     @ModelAttribute("memberInfo")
