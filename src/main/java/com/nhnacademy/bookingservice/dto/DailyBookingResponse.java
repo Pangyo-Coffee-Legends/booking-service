@@ -1,19 +1,35 @@
 package com.nhnacademy.bookingservice.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 @SuppressWarnings("unused")
 public class DailyBookingResponse {
 
     private Long no;
 
-    private LocalDateTime date;
+    private Long mbNo;
 
-    private LocalDateTime finishedAt;
+    @Setter
+    private String mbName;
+
+    private Integer attendeeCount;
+
+    private LocalDateTime startsAt;
+
+    private LocalDateTime finishesAt;
+
+    @QueryProjection
+    public DailyBookingResponse(Long no, Long mbNo, Integer attendeeCount, LocalDateTime startsAt, LocalDateTime finishesAt) {
+        this.no = no;
+        this.mbNo = mbNo;
+        this.attendeeCount = attendeeCount;
+        this.startsAt = startsAt;
+        this.finishesAt = finishesAt;
+    }
 
 }

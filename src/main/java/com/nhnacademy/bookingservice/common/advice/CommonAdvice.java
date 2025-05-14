@@ -4,9 +4,6 @@ import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ConflictException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.NotFoundException;
-import com.nhnacademy.bookingservice.common.exception.booking.BookingInfoDoesNotMatchException;
-import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeHasPassedException;
-import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeNotReachedException;
 import com.nhnacademy.bookingservice.controller.BookingController;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -105,36 +102,4 @@ public class CommonAdvice {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    @ExceptionHandler(BookingInfoDoesNotMatchException.class)
-    public ResponseEntity<CommonErrorResponse> bookingCodeDoesNotMatchExceptionHandler(BookingInfoDoesNotMatchException bookingInfoDoesNotMatchException, HttpServletRequest request) {
-        CommonErrorResponse errorResponse = new CommonErrorResponse(
-                bookingInfoDoesNotMatchException.getMessage(),
-                HttpStatus.NOT_FOUND.value(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-    }
-
-    @ExceptionHandler(BookingTimeHasPassedException.class)
-    public ResponseEntity<CommonErrorResponse> bookingTimeHasPassedExceptionHandler(BookingTimeHasPassedException bookingTimeHasPassedException, HttpServletRequest request) {
-        CommonErrorResponse errorResponse = new CommonErrorResponse(
-                bookingTimeHasPassedException.getMessage(),
-                HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    @ExceptionHandler(BookingTimeNotReachedException.class)
-    public ResponseEntity<CommonErrorResponse> bookingTimeNotReachedExceptionHandler(BookingTimeNotReachedException bookingTimeNotReachedException, HttpServletRequest request) {
-        CommonErrorResponse errorResponse = new CommonErrorResponse(
-                bookingTimeNotReachedException.getMessage(),
-                HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
 }

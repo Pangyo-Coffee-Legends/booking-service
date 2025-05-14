@@ -3,13 +3,13 @@ package com.nhnacademy.bookingservice.repository.impl;
 import com.nhnacademy.bookingservice.dto.BookingResponse;
 import com.nhnacademy.bookingservice.dto.DailyBookingResponse;
 import com.nhnacademy.bookingservice.dto.QBookingResponse;
+import com.nhnacademy.bookingservice.dto.QDailyBookingResponse;
 import com.nhnacademy.bookingservice.entity.Booking;
 import com.nhnacademy.bookingservice.entity.BookingChangeType;
 import com.nhnacademy.bookingservice.entity.QBooking;
 import com.nhnacademy.bookingservice.entity.QBookingChange;
 import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
@@ -41,7 +41,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                             qBooking.bookingCode,
                             qBooking.bookingDate,
                             qBooking.attendeeCount,
-                            qBooking.finishedAt,
+                            qBooking.finishesAt,
                             qBooking.createdAt,
                             qBooking.mbNo,
                             qBooking.bookingChange.name.as("changeName"),
@@ -66,7 +66,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                                 qBooking.bookingCode,
                                 qBooking.bookingDate,
                                 qBooking.attendeeCount,
-                                qBooking.finishedAt,
+                                qBooking.finishesAt,
                                 qBooking.createdAt,
                                 qBooking.mbNo,
                                 qBooking.bookingChange.name.as("changeName"),
@@ -104,11 +104,12 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
         return query
-                .select(Projections.fields(
-                                DailyBookingResponse.class,
-                                qBooking.bookingNo.as("no"),
-                                qBooking.bookingDate.as("date"),
-                                qBooking.finishedAt
+                .select(new QDailyBookingResponse(
+                        qBooking.bookingNo.as("no"),
+                        qBooking.mbNo,
+                        qBooking.attendeeCount,
+                        qBooking.bookingDate.as("date"),
+                        qBooking.finishesAt
                         )
                 )
                 .from(qBooking)

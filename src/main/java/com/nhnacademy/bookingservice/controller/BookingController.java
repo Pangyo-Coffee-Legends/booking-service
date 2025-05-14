@@ -47,7 +47,7 @@ public class BookingController {
      */
     @ModelAttribute("memberInfo")
     public MemberResponse getMemberInfo(@RequestHeader("X-USER") String email){
-        ResponseEntity<MemberResponse> responseEntity = memberAdaptor.getMember(email);
+        ResponseEntity<MemberResponse> responseEntity = memberAdaptor.getMemberByEmail(email);
         if (!responseEntity.getStatusCode().is2xxSuccessful() || responseEntity.getBody() == null) {
             throw new MemberNotFoundException();
         }
@@ -156,7 +156,7 @@ public class BookingController {
      * @return EntryResponse 회의실 입실 응답 ResponseEntity
      */
     @PostMapping("/{no}/enter")
-    public ResponseEntity<EntryResponse> checkBooking(@PathVariable("no") Long no, @RequestBody EntryRequest entryRequest) {
+    public ResponseEntity<EntryResponse> checkBooking(@PathVariable("no") Long no, @Validated @RequestBody EntryRequest entryRequest) {
         boolean isPermitted = bookingService.checkBooking(no, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getMeetingRoomNo());
 
         if (isPermitted) {

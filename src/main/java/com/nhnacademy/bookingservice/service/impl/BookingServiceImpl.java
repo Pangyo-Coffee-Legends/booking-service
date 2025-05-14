@@ -117,7 +117,19 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     public List<DailyBookingResponse> getDailyBookings(Long roomNo, LocalDate date) {
-        return bookingRepository.findBookingsByDate(roomNo, date);
+        List<DailyBookingResponse> bookings = bookingRepository.findBookingsByDate(roomNo, date);
+
+        for (DailyBookingResponse booking : bookings) {
+
+            MemberResponse member = memberAdaptor.getMemberByMbNo(booking.getMbNo()).getBody();
+
+            if (member != null) {
+                String mbName = member.getName();
+                booking.setMbName(mbName);
+            }
+        }
+
+        return bookings;
     }
 
     @Override
@@ -150,7 +162,7 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.EXTEND.getId()));
 
         booking.updateBookingEvent(change);
-        booking.updateFinishedAt(booking.getFinishedAt().plusMinutes(30));
+        booking.updateFinishesAt(booking.getFinishesAt().plusMinutes(30));
 
     }
 
@@ -176,7 +188,7 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CANCEL.getId()));
 
         booking.updateBookingEvent(change);
-        booking.updateFinishedAt(null);
+        booking.updateFinishesAt(null);
 
         // 언제 취소 됐는지 있어야할 듯
     }
@@ -232,7 +244,7 @@ public class BookingServiceImpl implements BookingService{
                 booking.getBookingCode(),
                 booking.getBookingDate(),
                 booking.getAttendeeCount(),
-                booking.getFinishedAt(),
+                booking.getFinishesAt(),
                 booking.getCreatedAt(),
                 booking.getMbNo(),
                 mbName,
