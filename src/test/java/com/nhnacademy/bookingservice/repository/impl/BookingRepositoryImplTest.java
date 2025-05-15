@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,8 +80,8 @@ class BookingRepositoryImplTest {
         assertAll(() -> {
             assertEquals("test1", response.getCode());
             assertNull(response.getChangeName());
-            assertEquals(1L, response.getMbNo());
-            assertEquals(1L, response.getRoomNo());
+            assertEquals(1L, response.getMember().getNo());
+            assertEquals(1L, response.getRoom().getNo());
         });
     }
 
@@ -101,8 +102,8 @@ class BookingRepositoryImplTest {
             assertEquals(1, response.size());
             assertEquals("test2", response.getFirst().getCode());
             assertEquals(8, response.getFirst().getAttendeeCount());
-            assertEquals(1L, response.getFirst().getMbNo());
-            assertEquals(2L, response.getFirst().getRoomNo());
+            assertEquals(1L, response.getFirst().getMember().getNo());
+            assertEquals(2L, response.getFirst().getRoom().getNo());
         });
     }
 
@@ -124,13 +125,13 @@ class BookingRepositoryImplTest {
 
             assertEquals("test3", response.get(1).getCode());
             assertEquals(9, response.get(1).getAttendeeCount());
-            assertEquals(2L, response.get(1).getMbNo());
-            assertEquals(2L, response.get(1).getRoomNo());
+            assertEquals(2L, response.get(1).getMember().getNo());
+            assertEquals(2L, response.get(1).getRoom().getNo());
 
             assertEquals("test2", response.getFirst().getCode());
             assertEquals(8, response.getFirst().getAttendeeCount());
-            assertEquals(1L, response.getFirst().getMbNo());
-            assertEquals(2L, response.getFirst().getRoomNo());
+            assertEquals(1L, response.getFirst().getMember().getNo());
+            assertEquals(2L, response.getFirst().getRoom().getNo());
         });
     }
 
@@ -140,12 +141,23 @@ class BookingRepositoryImplTest {
         Booking booking = Booking.ofNewBooking("test2", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
-        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(1L);
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(2L);
+
+        BookingResponse bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(),  null, member, room);
 
         Page<BookingResponse> response = bookingRepository.findBookings(1L, Pageable.ofSize(1));
 
-        assertNotNull(response);
-        assertTrue(response.getContent().contains(bookingResponse));
+        BookingResponse actual = response.getContent().getFirst();
+
+        assertAll(() -> {
+            assertEquals(bookingResponse.getNo(), actual.getNo());
+            assertEquals(bookingResponse.getCode(), actual.getCode());
+            assertEquals(bookingResponse.getMember().getNo(), actual.getMember().getNo());
+            assertEquals(bookingResponse.getRoom().getNo(), actual.getRoom().getNo());
+        });
     }
 
     @Test
@@ -174,8 +186,8 @@ class BookingRepositoryImplTest {
         assertNotNull(bookingResponse);
         assertAll(() -> {
             assertEquals("test4", bookingResponse.getCode());
-            assertEquals(1L, bookingResponse.getMbNo());
-            assertEquals(2L, bookingResponse.getRoomNo());
+            assertEquals(1L, bookingResponse.getMember().getNo());
+            assertEquals(2L, bookingResponse.getRoom().getNo());
         });
     }
 
@@ -207,8 +219,8 @@ class BookingRepositoryImplTest {
         assertNotNull(bookingResponse);
         assertAll(() -> {
             assertEquals("test2", bookingResponse.getCode());
-            assertEquals(1L, bookingResponse.getMbNo());
-            assertEquals(2L, bookingResponse.getRoomNo());
+            assertEquals(1L, bookingResponse.getMember().getNo());
+            assertEquals(2L, bookingResponse.getRoom().getNo());
         });
     }
 

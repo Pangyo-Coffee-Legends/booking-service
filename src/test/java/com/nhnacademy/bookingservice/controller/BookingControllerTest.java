@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -55,7 +56,7 @@ class BookingControllerTest {
     @BeforeEach
     void modelAttribute() {
         member = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111" ,"ROLE_USER");
-        when(memberAdaptor.getMember("test@test.com")).thenReturn(member);
+        when(memberAdaptor.getMemberByEmail("test@test.com")).thenReturn(member);
     }
 
     @Test
@@ -83,14 +84,15 @@ class BookingControllerTest {
     void registerBooking_exception_case1() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
-        doThrow(AlreadyMeetingRoomTimeException.class).when(bookingService).register(request, member);
+        doThrow(new AlreadyMeetingRoomTimeException()).when(bookingService).register(request, member);
         mockMvc.perform(
                         post("/api/v1/bookings")
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-USER", "test@test.com")
                                 .content(body)
-                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.uri").value("/api/v1/bookings"))
                 .andDo(print());
 
     }
@@ -100,7 +102,7 @@ class BookingControllerTest {
     void registerBooking_exception_case2() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
-        doThrow(MeetingRoomCapacityExceededException.class).when(bookingService).register(request, member);
+        doThrow(new MeetingRoomCapacityExceededException(8)).when(bookingService).register(request, member);
         mockMvc.perform(
                         post("/api/v1/bookings")
                                 .header("X-USER", "test@test.com")
@@ -135,7 +137,7 @@ class BookingControllerTest {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(memberAdaptor.getMember("test@test.com")).thenThrow(NotFoundException.class);
+        doThrow((new NotFoundException())).when(memberAdaptor).getMemberByEmail("test@test.com");
         when(bookingService.register(request, member)).thenReturn(response);
         mockMvc.perform(
                         post("/api/v1/bookings")
@@ -151,8 +153,14 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회 - 번호")
     void getBooking() throws Exception {
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        ReflectionTestUtils.setField(member1, "no", 1L);
 
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), 1L, "test", null,null, 1L, "회의실 A");
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        ReflectionTestUtils.setField(room, "no", 1L);
+        room.setName("회의실 A");
+
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"),  null, member1, room);
 
         when(bookingService.getBooking(Mockito.anyLong(), Mockito.any())).thenReturn(bookingResponse);
         mockMvc.perform(
@@ -164,8 +172,8 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.no").value(1L))
                 .andExpect(jsonPath("$.code").value("test"))
                 .andExpect(jsonPath("$.attendeeCount").value(8))
-                .andExpect(jsonPath("$.mbNo").value(1L))
-                .andExpect(jsonPath("$.roomName").value("회의실 A"))
+                .andExpect(jsonPath("$.member.no").value(1L))
+                .andExpect(jsonPath("$.room.name").value("회의실 A"))
                 .andDo(print());
 
     }
@@ -173,7 +181,7 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회 - forbidden")
     void getBooking_exception_case1() throws Exception {
-        doThrow(ForbiddenException.class).when(bookingService).getBooking(Mockito.anyLong(), Mockito.any());
+        doThrow(new ForbiddenException()).when(bookingService).getBooking(Mockito.anyLong(), Mockito.any());
         mockMvc.perform(
                         get("/api/v1/bookings/{no}", 1L)
                                 .header("X-USER", "test@test.com")
@@ -188,7 +196,7 @@ class BookingControllerTest {
     @DisplayName("예약 조회 - not found")
     void getBooking_exception_case2() throws Exception {
         MemberResponse memberInfo = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111", "ROLE_USER");
-        doThrow(BookingNotFoundException.class).when(bookingService).getBooking(2L, memberInfo);
+        doThrow(new BookingNotFoundException()).when(bookingService).getBooking(2L, memberInfo);
         mockMvc.perform(
                         get("/api/v1/bookings/{no}", 2L)
                                 .header("X-USER", "test@test.com")
@@ -202,8 +210,19 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회(리스트) - 사용자별")
     void getBookingsByMember_list() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
 
         when(bookingService.getMemberBookings(Mockito.any())).thenReturn(List.of(response1, response2));
 
@@ -214,21 +233,39 @@ class BookingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].no").value(1L))
-                .andExpect(jsonPath("$[0].mbNo").value(1L))
-                .andExpect(jsonPath("$[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$[0].member.no").value(1L))
+                .andExpect(jsonPath("$[0].room.name").value("회의실 A"))
                 .andExpect(jsonPath("$[1].no").value(2L))
-                .andExpect(jsonPath("$[1].mbNo").value(1L))
-                .andExpect(jsonPath("$[1].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$[1].member.no").value(1L))
+                .andExpect(jsonPath("$[1].room.name").value("회의실 B"))
                 .andDo(print());
     }
 
     @Test
     @DisplayName("예약 조회(리스트) - 전체")
     void getAllBookings_list() throws Exception {
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setEmail("test@test.com");
+        member1.setName("test");
+
+        BookingResponse.MemberInfo member2 = new BookingResponse.MemberInfo();
+        member2.setNo(2L);
+        member2.setEmail("test2@test.com");
+        member2.setName("test2");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room2);
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2,room);
 
         when(bookingService.getBookings()).thenReturn(List.of(response1, response2, response3, response4));
 
@@ -238,23 +275,34 @@ class BookingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].no").value(1L))
-                .andExpect(jsonPath("$[0].mbName").value("test"))
-                .andExpect(jsonPath("$[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$[0].member.name").value("test"))
+                .andExpect(jsonPath("$[0].room.name").value("회의실 A"))
                 .andExpect(jsonPath("$[1].no").value(2L))
-                .andExpect(jsonPath("$[1].mbName").value("test2"))
-                .andExpect(jsonPath("$[1].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$[1].member.name").value("test2"))
+                .andExpect(jsonPath("$[1].room.name").value("회의실 B"))
                 .andExpect(jsonPath("$[2].no").value(3L))
-                .andExpect(jsonPath("$[2].mbName").value("test"))
-                .andExpect(jsonPath("$[2].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$[2].member.name").value("test"))
+                .andExpect(jsonPath("$[2].room.name").value("회의실 B"))
                 .andDo(print());
     }
 
     @Test
     @DisplayName("예약 조회(페이징) - 사용자별")
     void getBookingsByMember() throws Exception {
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setName("test");
 
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, null, 2L, "회의실 B");
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
 
         when(bookingService.getPagedMemberBookings(Mockito.any(),Mockito.any())).thenReturn(new PageImpl<>(List.of(response1, response2)));
 
@@ -265,11 +313,11 @@ class BookingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.[0].no").value(1L))
-                .andExpect(jsonPath("$.content.[0].mbNo").value(1L))
-                .andExpect(jsonPath("$.content.[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$.content.[0].member.no").value(1L))
+                .andExpect(jsonPath("$.content.[0].room.name").value("회의실 A"))
                 .andExpect(jsonPath("$.content.[1].no").value(2L))
-                .andExpect(jsonPath("$.content.[1].mbNo").value(1L))
-                .andExpect(jsonPath("$.content.[1].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$.content.[1].member.no").value(1L))
+                .andExpect(jsonPath("$.content.[1].room.name").value("회의실 B"))
                 .andDo(print());
     }
 
@@ -277,12 +325,31 @@ class BookingControllerTest {
     @DisplayName("예약 전체 조회(페이징) - 관리자")
     void getAllBookings_admin() throws Exception {
         MemberResponse admin = new MemberResponse(1L, "admin", "admin@test.com", "010-1111-1111" ,"ROLE_ADMIN");
-        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+        when(memberAdaptor.getMemberByEmail("admin@test.com")).thenReturn(admin);
 
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setEmail("test@test.com");
+        member1.setName("test");
+
+        BookingResponse.MemberInfo member2 = new BookingResponse.MemberInfo();
+        member2.setNo(2L);
+        member2.setEmail("test2@test.com");
+        member2.setName("test2");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room2);
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room);
 
         when(bookingService.getPagedBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
 
@@ -292,14 +359,14 @@ class BookingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.[0].no").value(1L))
-                .andExpect(jsonPath("$.content.[0].mbName").value("test"))
-                .andExpect(jsonPath("$.content.[0].roomName").value("회의실 A"))
+                .andExpect(jsonPath("$.content.[0].member.name").value("test"))
+                .andExpect(jsonPath("$.content.[0].room.name").value("회의실 A"))
                 .andExpect(jsonPath("$.content.[1].no").value(2L))
-                .andExpect(jsonPath("$.content.[1].mbName").value("test2"))
-                .andExpect(jsonPath("$.content.[1].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$.content.[1].member.name").value("test2"))
+                .andExpect(jsonPath("$.content.[1].room.name").value("회의실 B"))
                 .andExpect(jsonPath("$.content.[2].no").value(3L))
-                .andExpect(jsonPath("$.content.[2].mbName").value("test"))
-                .andExpect(jsonPath("$.content.[2].roomName").value("회의실 B"))
+                .andExpect(jsonPath("$.content.[2].member.name").value("test"))
+                .andExpect(jsonPath("$.content.[2].room.name").value("회의실 B"))
                 .andDo(print());
     }
 
@@ -307,12 +374,30 @@ class BookingControllerTest {
     @DisplayName("예약 전체 조회(페이징) - 일반 사용자")
     void getAllBookings_user() throws Exception {
         MemberResponse admin = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111" ,"ROLE_USER");
-        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+        when(memberAdaptor.getMemberByEmail("admin@test.com")).thenReturn(admin);
 
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setEmail("test@test.com");
+        member1.setName("test");
+
+        BookingResponse.MemberInfo member2 = new BookingResponse.MemberInfo();
+        member2.setNo(2L);
+        member2.setEmail("test2@test.com");
+        member2.setName("test2");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room2);
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room);
 
         when(bookingService.getPagedBookings(Pageable.ofSize(10))).thenReturn(new PageImpl<>(List.of(response1, response2, response3, response4)));
 
@@ -329,12 +414,30 @@ class BookingControllerTest {
     void getAllBookings_sort() throws Exception {
 
         MemberResponse admin = new MemberResponse(3L, "admin", "admin@test.com", "010-1111-1111" ,"ROLE_ADMIN");
-        when(memberAdaptor.getMember("admin@test.com")).thenReturn(admin);
+        when(memberAdaptor.getMemberByEmail("admin@test.com")).thenReturn(admin);
 
-        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 1L, "회의실 A");
-        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 2L, "회의실 B");
-        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", "test@test.com", null, 2L, "회의실 B");
-        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 2L, "test2", "test2@test.com", null, 1L, "회의실 A");
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setEmail("test@test.com");
+        member1.setName("test");
+
+        BookingResponse.MemberInfo member2 = new BookingResponse.MemberInfo();
+        member2.setNo(2L);
+        member2.setEmail("test2@test.com");
+        member2.setName("test2");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        BookingResponse.MeetingRoomInfo room2 = new BookingResponse.MeetingRoomInfo();
+        room2.setNo(2L);
+        room2.setName("회의실 B");
+
+        BookingResponse response1 = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room);
+        BookingResponse response2 = new BookingResponse(2L, "test1", LocalDateTime.parse("2025-04-28T09:30:00"), 9,LocalDateTime.parse("2025-04-28T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room2);
+        BookingResponse response3 = new BookingResponse(3L, "test2", LocalDateTime.parse("2025-04-30T09:30:00"), 9,LocalDateTime.parse("2025-04-30T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member1, room2);
+        BookingResponse response4 = new BookingResponse(4L, "test3", LocalDateTime.parse("2025-04-29T10:30:00"), 9,LocalDateTime.parse("2025-04-29T11:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), null, member2, room);
 
         when(bookingService.getPagedBookings(
                 argThat(pageable -> pageable.getSort().getOrderFor("bookingDate") != null
@@ -379,9 +482,16 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
+        BookingResponse.MemberInfo member1 = new BookingResponse.MemberInfo();
+        member1.setNo(1L);
+        member1.setName("test");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
 
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 9, 1L);
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"), 1L, "test", null, "변경", 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"),"변경", member1, room);
 
         when(bookingService.updateBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(bookingResponse);
 
@@ -394,7 +504,7 @@ class BookingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("test"))
-                .andExpect(jsonPath("$.mbNo").value(1L))
+                .andExpect(jsonPath("$.member.no").value(1L))
                 .andExpect(jsonPath("$.changeName").value("변경"))
                 .andDo(print());
     }
@@ -514,9 +624,9 @@ class BookingControllerTest {
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("예약정보가 일치하지 않습니다."))
-                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.uri").value(String.format("/api/v1/bookings/%d/enter", 1)))
                 .andDo(print());
     }

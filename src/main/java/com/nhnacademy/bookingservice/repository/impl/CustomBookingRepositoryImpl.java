@@ -12,7 +12,6 @@ import com.nhnacademy.bookingservice.repository.CustomBookingRepository;
 import com.nhnacademy.bookingservice.repository.util.QueryDslUtil;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -46,8 +45,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                         qBooking.attendeeCount,
                         qBooking.finishesAt,
                         qBooking.createdAt,
-                        qBooking.mbNo,
                         qBooking.bookingChange.name.as("changeName"),
+                        qBooking.mbNo,
                         qBooking.roomNo
                 ))
                 .from(qBooking)

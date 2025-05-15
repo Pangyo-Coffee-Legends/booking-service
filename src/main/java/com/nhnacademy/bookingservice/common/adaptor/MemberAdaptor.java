@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface MemberAdaptor {
 
     @GetMapping("/email/{email}/info")
-    MemberResponse getMember(@PathVariable("email") String email);
+    MemberResponse getMemberByEmail(@PathVariable("email") String email);
 
     @GetMapping("/{no}/info")
-    MemberResponse getMember(@PathVariable("no") Long no);
+    MemberResponse getMemberByMbNo(@PathVariable("no") Long no);
 
     @PostMapping("/{mbNo}/password")
     Boolean verify(

@@ -78,12 +78,12 @@ public class BookingServiceImpl implements BookingService{
     @Transactional(readOnly = true)
     public BookingResponse getBooking(Long no, MemberResponse memberInfo) {
         BookingResponse booking = bookingRepository.findByNo(no).orElseThrow(BookingNotFoundException::new);
-        booking.setMbName(memberInfo.getName());
+        booking.getMember().setName(memberInfo.getName());
 
-        checkMember(booking.getMbNo(), memberInfo.getNo());
+        checkMember(booking.getMember().getNo(), memberInfo.getNo());
 
-        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-        booking.setRoomName(room.getMeetingRoomName());
+        MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+        booking.getRoom().setName(room.getMeetingRoomName());
 
         return booking;
     }
@@ -94,10 +94,10 @@ public class BookingServiceImpl implements BookingService{
         List<BookingResponse> bookings = bookingRepository.findBookingList(memberInfo.getNo());
 
         bookings.forEach(booking -> {
-            booking.setMbName(memberInfo.getName());
+            booking.getMember().setName(memberInfo.getName());
 
-            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-            booking.setRoomName(room.getMeetingRoomName());
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+            booking.getRoom().setName(room.getMeetingRoomName());
         });
         return bookings;
     }
@@ -108,12 +108,12 @@ public class BookingServiceImpl implements BookingService{
         List<BookingResponse> bookings = bookingRepository.findBookingList(null);
 
         bookings.forEach(booking -> {
-            MemberResponse member = getMember(booking.getMbNo());
-            booking.setMbName(member.getName());
-            booking.setEmail(member.getEmail());
+            MemberResponse member = getMember(booking.getMember().getNo());
+            booking.getMember().setName(member.getName());
+            booking.getMember().setEmail(member.getEmail());
 
-            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-            booking.setRoomName(room.getMeetingRoomName());
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+            booking.getRoom().setName(room.getMeetingRoomName());
         });
         return bookings;
     }
@@ -124,10 +124,10 @@ public class BookingServiceImpl implements BookingService{
         Page<BookingResponse> bookings = bookingRepository.findBookings(memberInfo.getNo(), pageable);
 
         bookings.forEach(booking -> {
-            booking.setMbName(memberInfo.getName());
+            booking.getMember().setName(memberInfo.getName());
 
-            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-            booking.setRoomName(room.getMeetingRoomName());
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+            booking.getRoom().setName(room.getMeetingRoomName());
         });
 
         return bookings;
@@ -140,12 +140,12 @@ public class BookingServiceImpl implements BookingService{
         Page<BookingResponse> bookings = bookingRepository.findBookings(null, pageable);
 
         bookings.forEach(booking -> {
-            MemberResponse member = getMember(booking.getMbNo());
-            booking.setMbName(member.getName());
-            booking.setEmail(member.getEmail());
+            MemberResponse member = getMember(booking.getMember().getNo());
+            booking.getMember().setName(member.getName());
+            booking.getMember().setEmail(member.getEmail());
 
-            MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-            booking.setRoomName(room.getMeetingRoomName());
+            MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+            booking.getRoom().setName(room.getMeetingRoomName());
         });
 
         return bookings;
@@ -238,13 +238,13 @@ public class BookingServiceImpl implements BookingService{
     @Override
     public boolean verify(Long no, ConfirmPasswordRequest request, MemberResponse memberInfo) {
         BookingResponse booking = bookingRepository.findByNo(no)
-                                                    .orElseThrow(() -> new BookingNotFoundException(no));
+                .orElseThrow(() -> new BookingNotFoundException(no));
 
         if(!Objects.equals(memberInfo.getRoleName(), "ROLE_ADMIN")){
-            checkMember(booking.getMbNo(), memberInfo.getNo());
+            checkMember(booking.getMember().getNo(), memberInfo.getNo());
         }
 
-       boolean isVerify =  memberAdaptor.verify(memberInfo.getNo(), request);
+        boolean isVerify =  memberAdaptor.verify(memberInfo.getNo(), request);
         if(!isVerify) {
             throw new BadRequestException();
         }
@@ -271,7 +271,7 @@ public class BookingServiceImpl implements BookingService{
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         // 예약 날짜
-        LocalDateTime bookingDateTime = bookingResponse.getDate();
+        LocalDateTime bookingDateTime = bookingResponse.getStartsAt();
         String bookingDateStr = bookingDateTime.format(dateFormatter);
 
         // 회의실 입실 날짜
@@ -297,6 +297,14 @@ public class BookingServiceImpl implements BookingService{
     }
 
     private BookingResponse convertBookingResponse(Booking booking, String mbName, String roomName){
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(booking.getMbNo());
+        member.setName(mbName);
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(booking.getRoomNo());
+        room.setName(roomName);
+
         return new BookingResponse(
                 booking.getBookingNo(),
                 booking.getBookingCode(),
@@ -304,12 +312,9 @@ public class BookingServiceImpl implements BookingService{
                 booking.getAttendeeCount(),
                 booking.getFinishesAt(),
                 booking.getCreatedAt(),
-                booking.getMbNo(),
-                mbName,
-                null,
                 booking.getBookingChange() == null ? null : booking.getBookingChange().getName(),
-                booking.getRoomNo(),
-                roomName
+                member,
+                room
         );
     }
 
@@ -324,6 +329,6 @@ public class BookingServiceImpl implements BookingService{
     }
 
     private MemberResponse getMember(Long mbNo) {
-        return memberAdaptor.getMember(mbNo);
+        return memberAdaptor.getMemberByMbNo(mbNo);
     }
 }
