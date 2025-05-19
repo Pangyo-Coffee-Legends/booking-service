@@ -18,5 +18,5 @@ public class EntryRequest {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime entryTime;
 
-    private Long meetingRoomNo;
+    private Long bookingNo;
 }

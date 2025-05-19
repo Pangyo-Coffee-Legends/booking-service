@@ -135,7 +135,7 @@ public class BookingController {
      * @return 해당 회의실의 일일 예약 목록
      */
     @GetMapping("/meeting-rooms/{roomNo}/date/{date}")
-    public ResponseEntity<List<DailyBookingResponse>> getDailyBookings(@PathVariable("roomNo")Long roomNo, @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+    public ResponseEntity<List<DailyBookingResponse>> getDailyBookings(@PathVariable("roomNo") Long roomNo, @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         List<DailyBookingResponse> responses = bookingService.getDailyBookings(roomNo, date);
         return ResponseEntity.ok(responses);
     }
@@ -193,20 +193,19 @@ public class BookingController {
     /**
      * 회의실 사용 예약을 확인하고, 해당 회의실 예약 정보를 반환합니다.
      *
-     * @param no 예약번호
      * @param entryRequest 회의실 입실 요청 DTO
      * @return EntryResponse 회의실 입실 응답 ResponseEntity
      */
-    @PostMapping("/{no}/enter")
-    public ResponseEntity<EntryResponse> checkBooking(@PathVariable("no") Long no, @Validated @RequestBody EntryRequest entryRequest) {
-        boolean isPermitted = bookingService.checkBooking(no, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getMeetingRoomNo());
+    @PostMapping("/verify") // meeting-room-no가 아닌 booking-no로 설계해야 RESTful.
+    public ResponseEntity<EntryResponse> checkBooking(@Validated @RequestBody EntryRequest entryRequest) {
+        boolean isPermitted = bookingService.checkBooking(entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
 
         if (isPermitted) {
             return ResponseEntity
                     .ok(new EntryResponse(
                             entryRequest.getCode(),
                             entryRequest.getEntryTime(),
-                            entryRequest.getMeetingRoomNo()
+                            entryRequest.getBookingNo()
                     ));
         } else {
             return ResponseEntity

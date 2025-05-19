@@ -155,7 +155,7 @@ class BookingServiceImplTest {
 
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
 
-        assertThrows(ForbiddenException.class, () -> bookingService.getBooking(1L, member));
+        Assertions.assertThrows(ForbiddenException.class, () -> bookingService.getBooking(1L, member));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
@@ -167,7 +167,7 @@ class BookingServiceImplTest {
 
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.empty());
 
-        assertThrows(BookingNotFoundException.class, () -> bookingService.getBooking(1L, member));
+        Assertions.assertThrows(BookingNotFoundException.class, () -> bookingService.getBooking(1L, member));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findByNo(Mockito.anyLong());
     }
@@ -484,10 +484,10 @@ class BookingServiceImplTest {
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(response));
 
         // when
-        boolean result = bookingService.checkBooking(no, code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
+        boolean result = bookingService.checkBooking(code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
 
         // then
-        assertTrue(result);
+        Assertions.assertTrue(result);
     }
 
     @Test
@@ -523,8 +523,8 @@ class BookingServiceImplTest {
         LocalDateTime entryTime = date.minusMinutes(5);
 
         // then
-        assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(1L, wrongCode, entryTime, roomNo)
+        Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
+                bookingService.checkBooking(wrongCode, entryTime, roomNo)
         );
     }
 
@@ -558,8 +558,8 @@ class BookingServiceImplTest {
         LocalDateTime differentDateEntry = LocalDateTime.parse("2025-04-30T09:30:00");
 
         // then
-        assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(no, code, differentDateEntry, roomNo)
+        Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
+                bookingService.checkBooking(code, differentDateEntry, roomNo)
         );
     }
 
@@ -593,8 +593,8 @@ class BookingServiceImplTest {
         // 예약 시간 15분 전 입실 시도
         LocalDateTime earlyEntry = date.minusMinutes(15);
 
-        assertThrows(BookingTimeNotReachedException.class, () ->
-                bookingService.checkBooking(no, code, earlyEntry, roomNo)
+        Assertions.assertThrows(BookingTimeNotReachedException.class, () ->
+                bookingService.checkBooking(code, earlyEntry, roomNo)
         );
     }
 
@@ -628,8 +628,8 @@ class BookingServiceImplTest {
         // 예약 시간 15분 이후 입실 시도
         LocalDateTime lateEntry = date.plusMinutes(15);
 
-        assertThrows(BookingTimeHasPassedException.class, () ->
-                bookingService.checkBooking(no, code, lateEntry, roomNo)
+        Assertions.assertThrows(BookingTimeHasPassedException.class, () ->
+                bookingService.checkBooking(code, lateEntry, roomNo)
         );
     }
 

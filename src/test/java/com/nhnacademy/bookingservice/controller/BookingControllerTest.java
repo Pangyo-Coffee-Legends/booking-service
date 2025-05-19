@@ -90,6 +90,7 @@ class BookingControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("X-USER", "test@test.com")
                                 .content(body)
+                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.uri").value("/api/v1/bookings"))
@@ -555,7 +556,7 @@ class BookingControllerTest {
     void checkBooking() throws Exception {
         boolean isPermitted = true;
 
-        when(bookingService.checkBooking(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(isPermitted);
+        when(bookingService.checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(isPermitted);
 
         LocalDateTime entryTime = LocalDateTime.now();
 
@@ -573,14 +574,14 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        mockMvc.perform(post("/api/v1/bookings/{no}/enter", 1L)
+        mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(entryResponse.getCode()))
                 .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
-                .andExpect(jsonPath("$.meetingRoomNo").value(entryResponse.getMeetingRoomNo()))
+                .andExpect(jsonPath("$.bookingNo").value(entryResponse.getBookingNo()))
                 .andDo(print());
     }
 
@@ -589,7 +590,7 @@ class BookingControllerTest {
     void checkBookingCodeFailed() throws Exception {
         boolean isPermitted = false;
 
-        when(bookingService.checkBooking(1L, "testCode", LocalDateTime.now(), 1L)).thenReturn(isPermitted);
+        when(bookingService.checkBooking("testCode", LocalDateTime.now(), 1L)).thenReturn(isPermitted);
 
         EntryRequest entryRequest = new EntryRequest(
                 "testCode",
@@ -599,7 +600,7 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        mockMvc.perform(post("/api/v1/bookings/{no}/enter", 1L)
+        mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
@@ -618,16 +619,16 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingInfoDoesNotMatchException()).when(bookingService).checkBooking(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingInfoDoesNotMatchException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
-        mockMvc.perform(post("/api/v1/bookings/{no}/enter", 1L)
+        mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("예약정보가 일치하지 않습니다."))
-                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.uri").value(String.format("/api/v1/bookings/%d/enter", 1)))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.uri").value("/api/v1/bookings/verify"))
                 .andDo(print());
     }
 
@@ -642,16 +643,16 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingTimeNotReachedException()).when(bookingService).checkBooking(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingTimeNotReachedException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
-        mockMvc.perform(post("/api/v1/bookings/{no}/enter", 1L)
+        mockMvc.perform(post("/api/v1/bookings/verify")
                     .header("X-USER", "test@test.com")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("예약 시간 10분 전부터 입장 가능합니다."))
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.uri").value(String.format("/api/v1/bookings/%d/enter", 1)))
+                .andExpect(jsonPath("$.uri").value("/api/v1/bookings/verify"))
                 .andDo(print());
     }
 
@@ -666,16 +667,16 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingTimeHasPassedException()).when(bookingService).checkBooking(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingTimeHasPassedException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
-        mockMvc.perform(post("/api/v1/bookings/{no}/enter", 1L)
+        mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("예약시간 10분 후까지만 입실 가능합니다."))
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
-                .andExpect(jsonPath("$.uri").value(String.format("/api/v1/bookings/%d/enter", 1)))
+                .andExpect(jsonPath("$.uri").value("/api/v1/bookings/verify"))
                 .andDo(print());
     }
 
