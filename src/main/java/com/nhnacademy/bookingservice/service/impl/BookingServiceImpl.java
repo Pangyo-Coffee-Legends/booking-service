@@ -13,10 +13,10 @@ import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundExc
 import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeHasPassedException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeNotReachedException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
-import com.nhnacademy.bookingservice.entity.Booking;
-import com.nhnacademy.bookingservice.entity.BookingChange;
+import com.nhnacademy.bookingservice.domain.Booking;
+import com.nhnacademy.bookingservice.domain.BookingChange;
 import com.nhnacademy.bookingservice.dto.*;
-import com.nhnacademy.bookingservice.entity.BookingChangeType;
+import com.nhnacademy.bookingservice.domain.BookingChangeType;
 import com.nhnacademy.bookingservice.repository.BookingChangeRepository;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import com.nhnacademy.bookingservice.service.BookingService;

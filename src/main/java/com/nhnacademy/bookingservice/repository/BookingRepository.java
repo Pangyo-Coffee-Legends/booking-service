@@ -1,6 +1,6 @@
 package com.nhnacademy.bookingservice.repository;
 
-import com.nhnacademy.bookingservice.entity.Booking;
+import com.nhnacademy.bookingservice.domain.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 

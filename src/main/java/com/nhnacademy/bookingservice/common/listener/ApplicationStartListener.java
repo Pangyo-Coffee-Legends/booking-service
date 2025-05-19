@@ -1,7 +1,7 @@
 package com.nhnacademy.bookingservice.common.listener;
 
-import com.nhnacademy.bookingservice.entity.Booking;
-import com.nhnacademy.bookingservice.entity.BookingChange;
+import com.nhnacademy.bookingservice.domain.Booking;
+import com.nhnacademy.bookingservice.domain.BookingChange;
 import com.nhnacademy.bookingservice.repository.BookingChangeRepository;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;

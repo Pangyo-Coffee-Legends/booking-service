@@ -1,4 +1,4 @@
-package com.nhnacademy.bookingservice.entity;
+package com.nhnacademy.bookingservice.domain;
 
 
 /**

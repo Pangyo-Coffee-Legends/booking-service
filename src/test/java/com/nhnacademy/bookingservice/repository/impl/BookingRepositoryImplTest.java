@@ -2,8 +2,8 @@ package com.nhnacademy.bookingservice.repository.impl;
 
 import com.nhnacademy.bookingservice.dto.BookingResponse;
 import com.nhnacademy.bookingservice.dto.DailyBookingResponse;
-import com.nhnacademy.bookingservice.entity.Booking;
-import com.nhnacademy.bookingservice.entity.BookingChange;
+import com.nhnacademy.bookingservice.domain.Booking;
+import com.nhnacademy.bookingservice.domain.BookingChange;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
