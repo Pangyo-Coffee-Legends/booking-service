@@ -6,6 +6,7 @@ import com.nhnacademy.bookingservice.dto.BookingResponse;
 import com.nhnacademy.bookingservice.dto.EmailRequest;
 import com.nhnacademy.bookingservice.dto.MeetingRoomResponse;
 import com.nhnacademy.bookingservice.repository.BookingRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +36,25 @@ class BookingEmailEventListenerTest {
     @InjectMocks
     private BookingEmailEventListener listener;
 
+    BookingResponse.MemberInfo member;
+    BookingResponse.MeetingRoomInfo room;
+
+    @BeforeEach
+    void setUp(){
+        member = new BookingResponse.MemberInfo();
+        member.setNo(1L);
+        member.setEmail("test@test.com");
+        member.setName("test");
+
+        room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+    }
 
     @Test
     @DisplayName("이메일 발송 - 예약 생성")
     void handleBookingCreatedEvent() {
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), 1L, "test", null,null, 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), null, member, room);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         String email = "test@example.com";
@@ -57,7 +72,7 @@ class BookingEmailEventListenerTest {
     @Test
     @DisplayName("이메일 발송 - 예약 취소")
     void handleBookingCancelEvent() {
-        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), 1L, "test", null,null, 1L, "회의실 A");
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"),null, member, room);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         String email = "test@example.com";

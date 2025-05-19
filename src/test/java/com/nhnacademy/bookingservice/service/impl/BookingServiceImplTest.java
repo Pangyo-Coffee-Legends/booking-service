@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -67,7 +68,16 @@ class BookingServiceImplTest {
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
 
-        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(), booking.getMbNo(),  null, booking.getRoomNo());
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(1L);
+        member.setEmail("test@test.com");
+        member.setName("test");
+
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(1L);
+        room.setName("회의실 A");
+
+        bookingResponse = new BookingResponse(booking.getBookingNo(), booking.getBookingCode(), booking.getBookingDate(), booking.getAttendeeCount(), booking.getFinishesAt(), booking.getCreatedAt(), null, member, room);
 
     }
 
@@ -190,13 +200,13 @@ class BookingServiceImplTest {
     @DisplayName("예약 전체 조회 - 리스트")
     void getAllBookings_list() {
         when(bookingRepository.findBookingList(null)).thenReturn(List.of(bookingResponse));
-        when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
+        when(memberAdaptor.getMemberByMbNo(Mockito.anyLong())).thenReturn(memberInfo);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
         bookingService.getBookings();
-      
+
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookingList(null);
-        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMemberByMbNo(Mockito.anyLong());
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
@@ -216,13 +226,13 @@ class BookingServiceImplTest {
     @DisplayName("예약 전체 조회 - 페이징")
     void getAllBookings_page() {
         when(bookingRepository.findBookings(null, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
-        when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
+        when(memberAdaptor.getMemberByMbNo(Mockito.anyLong())).thenReturn(memberInfo);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(meetingRoomResponse);
 
         bookingService.getPagedBookings(Pageable.ofSize(1));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMemberByMbNo(Mockito.anyLong());
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
@@ -230,21 +240,21 @@ class BookingServiceImplTest {
     @DisplayName("예약 전체 조회 - memberNotFound")
     void getAllBookings_exception_case1() {
         when(bookingRepository.findBookings(null, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
-        when(memberAdaptor.getMember(Mockito.anyLong())).thenThrow(NotFoundException.class);
+        when(memberAdaptor.getMemberByMbNo(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
 
         Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMemberByMbNo(Mockito.anyLong());
     }
 
     @Test
     @DisplayName("예약 전체 조회 - meetingRoomNotFound")
     void getAllBookings_exception_case2() {
         when(bookingRepository.findBookings(null, Pageable.ofSize(1))).thenReturn(new PageImpl<>(List.of(bookingResponse)));
-        when(memberAdaptor.getMember(Mockito.anyLong())).thenReturn(memberInfo);
+        when(memberAdaptor.getMemberByMbNo(Mockito.anyLong())).thenReturn(memberInfo);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenThrow(NotFoundException.class);
 
         Pageable pageable = Pageable.ofSize(1);
@@ -252,7 +262,7 @@ class BookingServiceImplTest {
         Assertions.assertThrows(NotFoundException.class, () -> bookingService.getPagedBookings(pageable));
 
         Mockito.verify(bookingRepository, Mockito.atLeast(1)).findBookings(null, Pageable.ofSize(1));
-        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMember(Mockito.anyLong());
+        Mockito.verify(memberAdaptor, Mockito.atLeast(1)).getMemberByMbNo(Mockito.anyLong());
         Mockito.verify(meetingRoomAdaptor, Mockito.atLeast(1)).getMeetingRoom(Mockito.anyLong());
     }
 
@@ -466,8 +476,8 @@ class BookingServiceImplTest {
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
-                mbNo,
                 null,
+                mbNo,
                 roomNo
         );
 
@@ -499,8 +509,8 @@ class BookingServiceImplTest {
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
-                mbNo,
                 null,
+                mbNo,
                 roomNo
         );
 
@@ -537,8 +547,8 @@ class BookingServiceImplTest {
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
-                mbNo,
                 null,
+                mbNo,
                 roomNo
         );
 
@@ -572,8 +582,8 @@ class BookingServiceImplTest {
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
-                mbNo,
                 null,
+                mbNo,
                 roomNo
         );
 
@@ -607,8 +617,8 @@ class BookingServiceImplTest {
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
-                mbNo,
                 null,
+                mbNo,
                 roomNo
         );
 

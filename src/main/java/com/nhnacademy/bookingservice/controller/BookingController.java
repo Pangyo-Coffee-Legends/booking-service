@@ -45,7 +45,7 @@ public class BookingController {
      */
     @ModelAttribute("memberInfo")
     public MemberResponse getMemberInfo(@RequestHeader("X-USER") String email){
-        return  memberAdaptor.getMember(email);
+        return  memberAdaptor.getMemberByEmail(email);
     }
 
     /**

@@ -27,8 +27,8 @@ public class BookingEmailEventListener {
 
         BookingResponse booking = bookingRepository.findByNo(event.getBookingNo()).orElseThrow(BookingNotFoundException::new);
 
-        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-        booking.setRoomName(room.getMeetingRoomName());
+        MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+        booking.getRoom().setName(room.getMeetingRoomName());
 
         EmailRequest request = new EmailRequest(
                 event.getEmail(),
@@ -64,8 +64,8 @@ public class BookingEmailEventListener {
                         """.formatted(
                                 event.getEmail(),
                                 booking.getCode(),
-                                booking.getRoomName(),
-                                booking.getDate().toString().replace("T", " "))
+                                booking.getRoom().getName(),
+                                booking.getStartsAt().toString().replace("T", " "))
         );
 
         notifyAdaptor.sendHtmlEmail(request);
@@ -78,8 +78,8 @@ public class BookingEmailEventListener {
 
         BookingResponse booking = bookingRepository.findByNo(event.getBookingNo()).orElseThrow(BookingNotFoundException::new);
 
-        MeetingRoomResponse room = getMeetingRoom(booking.getRoomNo());
-        booking.setRoomName(room.getMeetingRoomName());
+        MeetingRoomResponse room = getMeetingRoom(booking.getRoom().getNo());
+        booking.getRoom().setName(room.getMeetingRoomName());
 
         EmailRequest request = new EmailRequest(
                 event.getEmail(),
@@ -106,8 +106,8 @@ public class BookingEmailEventListener {
                         """.formatted(
                         event.getEmail(),
                         booking.getCode(),
-                        booking.getRoomName(),
-                        booking.getDate().toString().replace("T", " "))
+                        booking.getRoom().getName(),
+                        booking.getStartsAt().toString().replace("T", " "))
         );
 
         notifyAdaptor.sendHtmlEmail(request);

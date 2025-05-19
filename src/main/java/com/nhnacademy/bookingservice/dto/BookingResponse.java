@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
+@SuppressWarnings("java:S107")
 public class BookingResponse {
 
     private Long no;
@@ -16,7 +17,7 @@ public class BookingResponse {
     private String code;
 
     @EqualsAndHashCode.Exclude
-    private LocalDateTime date;
+    private LocalDateTime startsAt;
 
     private Integer attendeeCount;
 
@@ -26,31 +27,44 @@ public class BookingResponse {
     @EqualsAndHashCode.Exclude
     private LocalDateTime createdAt;
 
-    private Long mbNo;
-
-    @Setter
-    private String mbName;
-
-    @Setter
-    private String email;
-
     private String changeName;
 
-    private Long roomNo;
+    private MemberInfo member;
 
+    private MeetingRoomInfo room;
+
+    @Getter
     @Setter
-    private String roomName;
+    public static class MemberInfo {
+        private Long no;
+
+        private String name;
+
+        private String email;
+    }
+
+    @Getter
+    @Setter
+    public static class MeetingRoomInfo {
+        private Long no;
+
+        private String name;
+    }
 
     @QueryProjection
-    public BookingResponse(Long no, String code, LocalDateTime date, Integer attendeeCount, LocalDateTime finishesAt, LocalDateTime createdAt, Long mbNo, String changeName, Long roomNo) {
+    public BookingResponse(Long no, String code, LocalDateTime startsAt, Integer attendeeCount, LocalDateTime finishesAt, LocalDateTime createdAt, String changeName, Long mbNo, Long roomNo) {
         this.no = no;
         this.code = code;
-        this.date = date;
+        this.startsAt = startsAt;
         this.attendeeCount = attendeeCount;
         this.finishesAt = finishesAt;
         this.createdAt = createdAt;
-        this.mbNo = mbNo;
         this.changeName = changeName;
-        this.roomNo = roomNo;
+
+        this.member = new MemberInfo();
+        this.member.setNo(mbNo);
+
+        this.room = new MeetingRoomInfo();
+        this.room.setNo(roomNo);
     }
 }
