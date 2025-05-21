@@ -40,3 +40,4 @@ build/
 
 ### properties ###
 *.properties
+/logs
