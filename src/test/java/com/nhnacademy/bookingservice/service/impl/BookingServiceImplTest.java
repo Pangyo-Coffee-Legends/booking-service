@@ -9,6 +9,7 @@ import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
 import com.nhnacademy.bookingservice.common.exception.booking.*;
 import com.nhnacademy.bookingservice.common.exception.NotFoundException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
+import com.nhnacademy.bookingservice.common.generator.CodeGenerator;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.domain.Booking;
 import com.nhnacademy.bookingservice.domain.BookingChange;
@@ -32,11 +33,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.*;
 
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceImplTest {
+
+    @Mock
+    private CodeGenerator codeGenerator;
 
     @Mock
     private ApplicationEventPublisher publisher;
@@ -91,6 +94,7 @@ class BookingServiceImplTest {
 
         bookingService.register(request, memberInfo);
 
+        Mockito.verify(codeGenerator, Mockito.times(1)).generateCode();
         Mockito.verify(bookingRepository, Mockito.times(1)).save(Mockito.any(Booking.class));
         Mockito.verify(publisher, Mockito.times(1)).publishEvent(Mockito.any(BookingCreatedEvent.class));
 
