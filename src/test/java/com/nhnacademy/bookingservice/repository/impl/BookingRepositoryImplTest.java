@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,7 +62,7 @@ class BookingRepositoryImplTest {
             assertNotNull(find.getCreatedAt());
             assertNull(find.getBookingChange());
             assertEquals(1L, find.getMbNo());
-            assertEquals(2L, find.getRoomNo());
+            assertEquals(2L, find.getMeetingRoomNo());
         });
 
     }

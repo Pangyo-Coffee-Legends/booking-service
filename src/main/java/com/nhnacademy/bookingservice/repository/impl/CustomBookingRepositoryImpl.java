@@ -39,15 +39,15 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     private JPAQuery<BookingResponse> getBookingQuery(JPAQueryFactory queryFactory) {
         return queryFactory
                 .select(new QBookingResponse(
-                        qBooking.bookingNo,
-                        qBooking.bookingCode,
-                        qBooking.bookingDate,
+                        qBooking.bookingNo.as("no"),
+                        qBooking.bookingCode.as("code"),
+                        qBooking.bookingDate.as("startsAt"),
                         qBooking.attendeeCount,
                         qBooking.finishesAt,
                         qBooking.createdAt,
                         qBooking.bookingChange.name.as("changeName"),
                         qBooking.mbNo,
-                        qBooking.roomNo
+                        qBooking.meetingRoomNo
                 ))
                 .from(qBooking)
                 .leftJoin(qBooking.bookingChange, qBookingChange);
@@ -107,7 +107,7 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     }
 
     @Override
-    public List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date){
+    public List<DailyBookingResponse> findBookingsByDate(Long meetingRoomNo, LocalDate date){
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         LocalDateTime start = date.atStartOfDay();
@@ -118,13 +118,13 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
                         qBooking.bookingNo.as("no"),
                         qBooking.mbNo,
                         qBooking.attendeeCount,
-                        qBooking.bookingDate.as("date"),
+                        qBooking.bookingDate.as("startsAt"),
                         qBooking.finishesAt
                         )
                 )
                 .from(qBooking)
                 .leftJoin(qBooking.bookingChange, qBookingChange)
-                .where(qBooking.roomNo.eq(roomNo),
+                .where(qBooking.meetingRoomNo.eq(meetingRoomNo),
                         qBooking.bookingChange.isNull().or(qBooking.bookingChange.no.ne(BookingChangeType.CANCEL.getId())),
                         qBooking.bookingDate.goe(start).and(qBooking.bookingDate.lt(end))
                 )
@@ -132,12 +132,12 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     }
 
     @Override
-    public boolean existsRoomNoAndDate(Long roomNo, LocalDateTime date) {
+    public boolean existsRoomNoAndDate(Long meetingRoomNo, LocalDateTime date) {
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         Long exist = query.select(qBooking.count())
                 .from(qBooking)
-                .where(qBooking.roomNo.eq(roomNo),
+                .where(qBooking.meetingRoomNo.eq(meetingRoomNo),
                         qBooking.bookingDate.lt(date.plusHours(1)),
                         qBooking.finishesAt.gt(date)
                 )
@@ -147,12 +147,12 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
     }
 
     @Override
-    public boolean hasBookingStartingAt(Long roomNo, LocalDateTime date) {
+    public boolean hasBookingStartingAt(Long meetingRoomNo, LocalDateTime date) {
         JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         Long exist = query.select(qBooking.count())
                 .from(qBooking)
-                .where(qBooking.roomNo.eq(roomNo), qBooking.bookingDate.eq(date))
+                .where(qBooking.meetingRoomNo.eq(meetingRoomNo), qBooking.bookingDate.eq(date))
                 .fetchOne();
 
         return exist != null && exist > 0;

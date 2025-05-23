@@ -196,7 +196,7 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
-        if(bookingRepository.existsRoomNoAndDate(booking.getRoomNo(), booking.getFinishesAt())){
+        if(bookingRepository.existsRoomNoAndDate(booking.getMeetingRoomNo(), booking.getFinishesAt())){
             throw new AlreadyMeetingRoomTimeException();
         }
 
@@ -303,7 +303,7 @@ public class BookingServiceImpl implements BookingService{
         member.setName(mbName);
 
         BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
-        room.setNo(booking.getRoomNo());
+        room.setNo(booking.getMeetingRoomNo());
         room.setName(roomName);
 
         return new BookingResponse(
