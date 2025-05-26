@@ -45,12 +45,12 @@ public class Booking {
     @Comment("예약자번호")
     private Long mbNo;
 
-    @Column(name = "room_no", nullable = false)
+    @Column(name = "meeting_room_no", nullable = false)
     @Comment("회의실번호")
-    private Long roomNo;
+    private Long meetingRoomNo;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "changes_no", referencedColumnName = "changes_no", nullable = true)
+    @JoinColumn(name = "change_no", referencedColumnName = "change_no", nullable = true)
     @Comment("특이사항번호")
     private BookingChange bookingChange;
 
@@ -59,14 +59,14 @@ public class Booking {
        this.createdAt = LocalDateTime.now();
    }
 
-    private Booking(String bookingCode, LocalDateTime bookingDate, Integer attendeeCount, LocalDateTime finishesAt, Long mbNo, BookingChange bookingChange, Long roomNo) {
+    private Booking(String bookingCode, LocalDateTime bookingDate, Integer attendeeCount, LocalDateTime finishesAt, Long mbNo, BookingChange bookingChange, Long meetingRoomNo) {
         this.bookingCode = bookingCode;
         this.bookingDate = bookingDate;
         this.attendeeCount = attendeeCount;
         this.finishesAt = finishesAt;
         this.mbNo = mbNo;
         this.bookingChange = bookingChange;
-        this.roomNo = roomNo;
+        this.meetingRoomNo = meetingRoomNo;
     }
 
     public static Booking ofNewBooking(String code, LocalDateTime date, Integer attendees, LocalDateTime finishesAt, Long mbNo, BookingChange bookingChange, Long roomNo){
@@ -77,7 +77,7 @@ public class Booking {
        this.bookingDate = date;
        this.attendeeCount = attendees;
        this.finishesAt = finishesAt;
-       this.roomNo = roomNo;
+       this.meetingRoomNo = roomNo;
     }
 
     public void updateBookingEvent(BookingChange bookingChange){

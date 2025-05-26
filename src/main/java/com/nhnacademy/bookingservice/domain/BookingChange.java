@@ -16,10 +16,10 @@ public class BookingChange {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "changes_no")
+    @Column(name = "change_no")
     private Long no;
 
-    @Column(name = "changes_name", length = 10, nullable = false)
+    @Column(name = "change_name", length = 10, nullable = false)
     @Comment("특이사항")
     private String name;
 

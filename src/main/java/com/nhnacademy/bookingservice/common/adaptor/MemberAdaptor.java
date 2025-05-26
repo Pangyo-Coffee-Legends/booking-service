@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "member-service", url = "http://localhost:10255", path = "/api/v1/members")
 public interface MemberAdaptor {
 
-    @GetMapping("/email/{email}/info")
+    @GetMapping("/email/{email}?view=summary")
     MemberResponse getMemberByEmail(@PathVariable("email") String email);
 
-    @GetMapping("/{no}/info")
+    @GetMapping("/{no}?view=summary")
     MemberResponse getMemberByMbNo(@PathVariable("no") Long no);
 
     @PostMapping("/{mbNo}/password")

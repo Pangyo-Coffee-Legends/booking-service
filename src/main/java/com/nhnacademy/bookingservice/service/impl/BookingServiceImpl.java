@@ -13,6 +13,7 @@ import com.nhnacademy.bookingservice.common.exception.booking.BookingNotFoundExc
 import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeHasPassedException;
 import com.nhnacademy.bookingservice.common.exception.booking.BookingTimeNotReachedException;
 import com.nhnacademy.bookingservice.common.exception.meeting.MeetingRoomCapacityExceededException;
+import com.nhnacademy.bookingservice.common.generator.CodeGenerator;
 import com.nhnacademy.bookingservice.domain.Booking;
 import com.nhnacademy.bookingservice.domain.BookingChange;
 import com.nhnacademy.bookingservice.dto.*;
@@ -40,6 +41,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService{
 
+    private final CodeGenerator codeGenerator;
     private final ApplicationEventPublisher publisher;
 
     private final BookingRepository bookingRepository;
@@ -56,7 +58,7 @@ public class BookingServiceImpl implements BookingService{
             throw new MeetingRoomCapacityExceededException(room.getMeetingRoomCapacity());
         }
 
-        String code = UUID.randomUUID().toString().split("-")[0];
+        String code = codeGenerator.generateCode();
 
         LocalDate date = LocalDate.parse(request.getDate());
         LocalTime time = LocalTime.parse(request.getTime());
@@ -194,7 +196,7 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
-        if(bookingRepository.existsRoomNoAndDate(booking.getRoomNo(), booking.getFinishesAt())){
+        if(bookingRepository.existsRoomNoAndDate(booking.getMeetingRoomNo(), booking.getFinishesAt())){
             throw new AlreadyMeetingRoomTimeException();
         }
 
@@ -305,7 +307,7 @@ public class BookingServiceImpl implements BookingService{
         member.setName(mbName);
 
         BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
-        room.setNo(booking.getRoomNo());
+        room.setNo(booking.getMeetingRoomNo());
         room.setName(roomName);
 
         return new BookingResponse(
