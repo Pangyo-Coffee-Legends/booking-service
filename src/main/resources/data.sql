@@ -16,12 +16,6 @@ CREATE TABLE booking_changes (
                                  PRIMARY KEY (change_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO booking_changes(change_name) VALUES
-                                             ('연장'),
-                                             ('종료'),
-                                             ('취소'),
-                                             ('변경');
-
 CREATE TABLE bookings (
                           booking_no bigint NOT NULL COMMENT '예약 번호, autoincrement',
                           mb_no bigint NOT NULL COMMENT '예약자 번호',
