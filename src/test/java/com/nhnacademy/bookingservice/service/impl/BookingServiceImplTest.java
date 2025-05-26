@@ -484,7 +484,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(response));
 
         // when
-        boolean result = bookingService.checkBooking(code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
+        boolean result = bookingService.checkBooking(memberInfo, code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
 
         // then
         Assertions.assertTrue(result);
@@ -524,7 +524,7 @@ class BookingServiceImplTest {
 
         // then
         Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(wrongCode, entryTime, roomNo)
+                bookingService.checkBooking(memberInfo, wrongCode, entryTime, roomNo)
         );
     }
 
@@ -559,7 +559,7 @@ class BookingServiceImplTest {
 
         // then
         Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(code, differentDateEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, differentDateEntry, roomNo)
         );
     }
 
@@ -594,7 +594,7 @@ class BookingServiceImplTest {
         LocalDateTime earlyEntry = date.minusMinutes(15);
 
         Assertions.assertThrows(BookingTimeNotReachedException.class, () ->
-                bookingService.checkBooking(code, earlyEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, earlyEntry, roomNo)
         );
     }
 
@@ -629,7 +629,7 @@ class BookingServiceImplTest {
         LocalDateTime lateEntry = date.plusMinutes(15);
 
         Assertions.assertThrows(BookingTimeHasPassedException.class, () ->
-                bookingService.checkBooking(code, lateEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, lateEntry, roomNo)
         );
     }
 

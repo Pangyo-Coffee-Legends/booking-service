@@ -556,12 +556,12 @@ class BookingControllerTest {
     void checkBooking() throws Exception {
         boolean isPermitted = true;
 
-        when(bookingService.checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(isPermitted);
+        when(bookingService.checkBooking(Mockito.any(MemberResponse.class), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(isPermitted);
 
         LocalDateTime entryTime = LocalDateTime.now();
 
         EntryResponse entryResponse = new EntryResponse(
-                "testCode",
+                HttpStatus.OK.value(),
                 entryTime,
                 1L
         );
@@ -579,7 +579,7 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(entryResponse.getCode()))
+                .andExpect(jsonPath("$.statusCode").value(entryResponse.getStatusCode()))
                 .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
                 .andExpect(jsonPath("$.bookingNo").value(entryResponse.getBookingNo()))
                 .andDo(print());
@@ -590,7 +590,7 @@ class BookingControllerTest {
     void checkBookingCodeFailed() throws Exception {
         boolean isPermitted = false;
 
-        when(bookingService.checkBooking("testCode", LocalDateTime.now(), 1L)).thenReturn(isPermitted);
+        when(bookingService.checkBooking(member, "testCode", LocalDateTime.now(), 1L)).thenReturn(isPermitted);
 
         EntryRequest entryRequest = new EntryRequest(
                 "testCode",
@@ -619,7 +619,7 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingInfoDoesNotMatchException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingInfoDoesNotMatchException()).when(bookingService).checkBooking(Mockito.any(MemberResponse.class), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
         mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")
@@ -643,7 +643,7 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingTimeNotReachedException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingTimeNotReachedException()).when(bookingService).checkBooking(Mockito.any(MemberResponse.class), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
         mockMvc.perform(post("/api/v1/bookings/verify")
                     .header("X-USER", "test@test.com")
@@ -667,7 +667,7 @@ class BookingControllerTest {
 
         String json = mapper.writeValueAsString(entryRequest);
 
-        doThrow(new BookingTimeHasPassedException()).when(bookingService).checkBooking(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        doThrow(new BookingTimeHasPassedException()).when(bookingService).checkBooking(Mockito.any(MemberResponse.class), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
         mockMvc.perform(post("/api/v1/bookings/verify")
                         .header("X-USER", "test@test.com")

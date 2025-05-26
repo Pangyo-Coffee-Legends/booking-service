@@ -44,7 +44,7 @@ public class BookingController {
      * @see com.nhnacademy.bookingservice.common.advice.CommonAdvice 공통 예외 처리
      */
     @ModelAttribute("memberInfo")
-    public MemberResponse getMemberInfo(@RequestHeader("X-USER") String email){
+    public MemberResponse getMemberInfo(@RequestHeader(value = "X-USER", required = false) String email){
         return  memberAdaptor.getMemberByEmail(email);
     }
 
@@ -196,22 +196,18 @@ public class BookingController {
      * @param entryRequest 회의실 입실 요청 DTO
      * @return EntryResponse 회의실 입실 응답 ResponseEntity
      */
-    @PostMapping("/verify") // meeting-room-no가 아닌 booking-no로 설계해야 RESTful.
-    public ResponseEntity<EntryResponse> checkBooking(@Validated @RequestBody EntryRequest entryRequest) {
-        boolean isPermitted = bookingService.checkBooking(entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
+    @PostMapping("/verify")
+    public ResponseEntity<EntryResponse> checkBooking(@ModelAttribute("memberInfo") MemberResponse memberInfo, @Validated @RequestBody EntryRequest entryRequest) {
+        bookingService.checkBooking(memberInfo, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
 
-        if (isPermitted) {
-            return ResponseEntity
-                    .ok(new EntryResponse(
-                            entryRequest.getCode(),
-                            entryRequest.getEntryTime(),
-                            entryRequest.getBookingNo()
-                    ));
-        } else {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
-        }
+
+        return ResponseEntity
+                .ok(new EntryResponse(
+                        HttpStatus.OK.value(),
+                        "입실이 완료되었습니다.",
+                        entryRequest.getEntryTime(),
+                        entryRequest.getBookingNo()
+                ));
     }
 
     @PostMapping("/{no}/verify")

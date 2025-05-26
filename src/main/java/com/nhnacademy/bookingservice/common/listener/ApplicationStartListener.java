@@ -44,7 +44,7 @@ public class ApplicationStartListener implements ApplicationListener<Application
         bookingRepository.save(booking4);
 
         for(int i=1; i < 10; i++){
-            Booking booking = Booking.ofNewBooking("test"+i, LocalDateTime.parse("2025-05-1%sT09:30:00".formatted(i)), 8, LocalDateTime.parse("2025-05-1%sT10:30:00".formatted(i)), 1L, null, 1L);
+            Booking booking = Booking.ofNewBooking("test"+i, LocalDateTime.parse("2025-05-2%sT15:20:00".formatted(i)), 8, LocalDateTime.parse("2025-05-2%sT15:30:00".formatted(i)), 1L, null, 1L);
             bookingRepository.save(booking);
 
         }

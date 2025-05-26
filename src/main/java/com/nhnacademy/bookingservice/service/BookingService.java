@@ -111,7 +111,7 @@ public interface BookingService {
     void cancelBooking(Long no, MemberResponse memberInfo);
 
 
-    boolean checkBooking(String code, LocalDateTime entryTime, Long meetingRoomNo);
+    boolean checkBooking(MemberResponse memberInfo, String code, LocalDateTime entryTime, Long bookingNo);
 
     /**
      * 본인 인증 합니다.
