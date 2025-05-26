@@ -60,6 +60,8 @@ class BookingIntegrationTest {
     MemberResponse member;
     MemberResponse admin;
     MemberResponse other;
+    BookingRegisterResponse savedBooking;
+
     @BeforeEach
     void setUp() {
         member = new MemberResponse(1L, "test", "test@test.com", "010-1111-1111" ,"ROLE_USER");
@@ -76,7 +78,7 @@ class BookingIntegrationTest {
 
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-001");
-        bookingService.register(request, member);
+        savedBooking = bookingService.register(request, member);
     }
 
     @Test
@@ -94,7 +96,6 @@ class BookingIntegrationTest {
                                 .content(body)
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.no").value(2L))
                 .andDo(print());
 
         List<Booking> all = bookingRepository.findAll();
@@ -173,11 +174,10 @@ class BookingIntegrationTest {
     @DisplayName("예약 조회")
     void getBooking() throws Exception {
         mockMvc.perform(
-                        get("/api/v1/bookings/{no}", 7L)
+                        get("/api/v1/bookings/{no}", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.no").value(7L))
                 .andExpect(jsonPath("$.attendeeCount").value(8))
                 .andExpect(jsonPath("$.room.name").value("회의실 A"))
                 .andDo(print());
@@ -205,7 +205,7 @@ class BookingIntegrationTest {
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
-                put("/api/v1/bookings/{no}", 9L)
+                put("/api/v1/bookings/{no}", savedBooking.getNo())
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
@@ -223,7 +223,7 @@ class BookingIntegrationTest {
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
-                        put("/api/v1/bookings/{no}", 10L)
+                        put("/api/v1/bookings/{no}", savedBooking.getNo())
                                 .header("X-USER", "admin@test.com")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body)
@@ -237,14 +237,14 @@ class BookingIntegrationTest {
     @DisplayName("예약 연장")
     void extendBooking() throws Exception {
         mockMvc.perform(
-                        put("/api/v1/bookings/{no}/extend", 11L)
+                        put("/api/v1/bookings/{no}/extend", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
 
                 )
                 .andExpect(status().isOk())
                 .andDo(print());
 
-        BookingResponse response = bookingRepository.findByNo(11L).orElseThrow();
+        BookingResponse response = bookingRepository.findByNo(savedBooking.getNo()).orElseThrow();
         Assertions.assertEquals(LocalDateTime.parse("2025-04-29T11:00:00"), response.getFinishesAt());
         Assertions.assertEquals("연장", response.getChangeName());
     }
@@ -258,7 +258,7 @@ class BookingIntegrationTest {
         bookingService.register(request, member);
 
         mockMvc.perform(
-                        put("/api/v1/bookings/{no}/extend", 12L)
+                        put("/api/v1/bookings/{no}/extend", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
 
                 )
@@ -272,14 +272,14 @@ class BookingIntegrationTest {
     @DisplayName("예약 종료")
     void finishBooking() throws Exception {
         mockMvc.perform(
-                        put("/api/v1/bookings/{no}/finish", 14L)
+                        put("/api/v1/bookings/{no}/finish", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
 
                 )
                 .andExpect(status().isOk())
                 .andDo(print());
 
-        BookingResponse response = bookingRepository.findByNo(14L).orElseThrow();
+        BookingResponse response = bookingRepository.findByNo(savedBooking.getNo()).orElseThrow();
         Assertions.assertEquals("종료", response.getChangeName());
     }
 
@@ -288,14 +288,14 @@ class BookingIntegrationTest {
     @DisplayName("예약 취소")
     void deleteBooking() throws Exception {
         mockMvc.perform(
-                        delete("/api/v1/bookings/{no}", 15L)
+                        delete("/api/v1/bookings/{no}", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
 
                 )
                 .andExpect(status().isNoContent())
                 .andDo(print());
 
-        BookingResponse response = bookingRepository.findByNo(15L).orElseThrow();
+        BookingResponse response = bookingRepository.findByNo(savedBooking.getNo()).orElseThrow();
         Assertions.assertNull(response.getFinishesAt());
         Assertions.assertEquals("취소", response.getChangeName());
     }
@@ -309,7 +309,7 @@ class BookingIntegrationTest {
         when(memberAdaptor.verify(1L, request)).thenReturn(true);
 
         mockMvc.perform(
-                        post("/api/v1/bookings/{no}/verify", 16L)
+                        post("/api/v1/bookings/{no}/verify", savedBooking.getNo())
                                 .header("X-USER", "test@test.com")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body)
@@ -327,7 +327,7 @@ class BookingIntegrationTest {
         when(memberAdaptor.verify(2L, request)).thenReturn(true);
 
         mockMvc.perform(
-                        post("/api/v1/bookings/{no}/verify", 17L)
+                        post("/api/v1/bookings/{no}/verify", savedBooking.getNo())
                                 .header("X-USER", "admin@test.com")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body)
@@ -344,7 +344,7 @@ class BookingIntegrationTest {
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
-                        post("/api/v1/bookings/{no}/verify", 18L)
+                        post("/api/v1/bookings/{no}/verify", savedBooking.getNo())
                                 .header("X-USER", "other@test.com")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body)
@@ -357,7 +357,7 @@ class BookingIntegrationTest {
     @Order(17)
     @DisplayName("회의실 입실")
     void checkBooking() throws Exception {
-        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:20:00"), 19L);
+        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:20:00"), savedBooking.getNo());
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -375,7 +375,7 @@ class BookingIntegrationTest {
     @Order(18)
     @DisplayName("회의실 입실 실패 - 코드 불일치")
     void checkBooking_fail_code() throws Exception {
-        EntryRequest request = new EntryRequest("test1", LocalDateTime.parse("2025-04-29T09:30:00"), 20L);
+        EntryRequest request = new EntryRequest("test1", LocalDateTime.parse("2025-04-29T09:30:00"), savedBooking.getNo());
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -392,7 +392,7 @@ class BookingIntegrationTest {
     @Order(19)
     @DisplayName("회의실 입실 실패 - 예약 날짜 불일치")
     void checkBooking_fail_startsAt() throws Exception {
-        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-28T09:30:00"), 21L);
+        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-28T09:30:00"), savedBooking.getNo());
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -409,7 +409,7 @@ class BookingIntegrationTest {
     @Order(20)
     @DisplayName("회의실 입실 실패 - 예약 시간 30분 전")
     void checkBooking_fail_before_minutes() throws Exception {
-        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:00:00"), 22L);
+        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:00:00"), savedBooking.getNo());
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -426,7 +426,7 @@ class BookingIntegrationTest {
     @Order(21)
     @DisplayName("회의실 입실 실패 - 예약 시간 30분 후")
     void checkBooking_fail_after_minutes() throws Exception {
-        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T10:00:00"), 23L);
+        EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T10:00:00"), savedBooking.getNo());
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
