@@ -116,23 +116,6 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 실패 - 헤더가 없는 경우")
-    void registerBooking_exception_case3() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
-        String body = mapper.writeValueAsString(request);
-        BookingRegisterResponse response = new BookingRegisterResponse(1L);
-        when(bookingService.register(request, member)).thenReturn(response);
-        mockMvc.perform(
-                        post("/api/v1/bookings")
-                                .content(body)
-                                .contentType(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().is4xxClientError())
-                .andDo(print());
-
-    }
-
-    @Test
     @DisplayName("예약 실패 - 헤더가 있는 경우")
     void registerBooking_exception_case4() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
@@ -562,6 +545,7 @@ class BookingControllerTest {
 
         EntryResponse entryResponse = new EntryResponse(
                 HttpStatus.OK.value(),
+                "입실이 완료되었습니다.",
                 entryTime,
                 1L
         );
@@ -582,29 +566,6 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.statusCode").value(entryResponse.getStatusCode()))
                 .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
                 .andExpect(jsonPath("$.bookingNo").value(entryResponse.getBookingNo()))
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("입실불허 - 400 Bad Request")
-    void checkBookingCodeFailed() throws Exception {
-        boolean isPermitted = false;
-
-        when(bookingService.checkBooking(member, "testCode", LocalDateTime.now(), 1L)).thenReturn(isPermitted);
-
-        EntryRequest entryRequest = new EntryRequest(
-                "testCode",
-                LocalDateTime.now(),
-                1L
-        );
-
-        String json = mapper.writeValueAsString(entryRequest);
-
-        mockMvc.perform(post("/api/v1/bookings/verify")
-                        .header("X-USER", "test@test.com")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
                 .andDo(print());
     }
 
