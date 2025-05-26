@@ -261,10 +261,14 @@ public class BookingServiceImpl implements BookingService{
      * @return 회의실 입실 허가 boolean 반환
      */
     @Override
-    public boolean checkBooking(String code, LocalDateTime entryTime, Long bookingNo) {
+    public boolean checkBooking(MemberResponse memberInfo, String code, LocalDateTime entryTime, Long bookingNo) {
         // 저장된 예약정보 찾아오기
         BookingResponse bookingResponse = bookingRepository.findByNo(bookingNo).orElseThrow(() -> new BookingNotFoundException(bookingNo));
 
+        if(!bookingResponse.getMember().getNo().equals(memberInfo.getNo())) {
+            throw new BookingInfoDoesNotMatchException();
+        }
+        
         // 저장된 예약정보 내 예약코드
         String bookingCode = bookingResponse.getCode();
 

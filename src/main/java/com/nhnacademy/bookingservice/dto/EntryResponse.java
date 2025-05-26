@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class EntryResponse {
 
-    private String code;
+    private int statusCode;
+
+    private String message;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime entryTime;
