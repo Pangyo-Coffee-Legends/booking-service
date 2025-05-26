@@ -200,7 +200,6 @@ public class BookingController {
     public ResponseEntity<EntryResponse> checkBooking(@ModelAttribute("memberInfo") MemberResponse memberInfo, @Validated @RequestBody EntryRequest entryRequest) {
         bookingService.checkBooking(memberInfo, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
 
-
         return ResponseEntity
                 .ok(new EntryResponse(
                         HttpStatus.OK.value(),

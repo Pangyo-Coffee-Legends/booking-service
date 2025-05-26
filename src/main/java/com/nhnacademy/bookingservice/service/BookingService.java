@@ -110,7 +110,14 @@ public interface BookingService {
      */
     void cancelBooking(Long no, MemberResponse memberInfo);
 
-
+    /**
+     *
+     * @param memberInfo 인증된 사용자 정보
+     * @param code 예약 시 발급받은 예약코드
+     * @param entryTime 입실 시도 시간
+     * @param bookingNo 예약 번호
+     * @return 검증된 예약은 true를 반환하고, 검증에 실패한 예약은 각 시나리오에 맞는 Exception 발생
+     */
     boolean checkBooking(MemberResponse memberInfo, String code, LocalDateTime entryTime, Long bookingNo);
 
     /**
