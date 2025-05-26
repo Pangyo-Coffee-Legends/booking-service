@@ -15,9 +15,9 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.data.support.PageableExecutionUtils;
 
 import java.time.LocalDate;
@@ -25,11 +25,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport implements CustomBookingRepository {
+@RequiredArgsConstructor
+public class CustomBookingRepositoryImpl implements CustomBookingRepository {
 
-    public CustomBookingRepositoryImpl() {
-        super(Booking.class);
-    }
+    private final JPAQueryFactory queryFactory;
 
     QBooking qBooking = QBooking.booking;
     QBookingChange qBookingChange = QBookingChange.bookingChange;
@@ -55,9 +54,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public Optional<BookingResponse> findByNo(Long no){
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        return Optional.ofNullable(getBookingQuery(query)
+        return Optional.ofNullable(getBookingQuery(queryFactory)
                 .where(qBooking.bookingNo.eq(no))
                 .orderBy(qBooking.createdAt.desc())
                 .fetchOne());
@@ -65,9 +63,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public List<BookingResponse> findBookingList(Long mbNo){
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        return getBookingQuery(query)
+        return getBookingQuery(queryFactory)
                 .where(whereExpression(mbNo))
 //                .orderBy(qBooking.createdAt.desc())
                 .fetch();
@@ -75,7 +72,6 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public Page<BookingResponse> findBookings(Long mbNo, Pageable pageable){
-        JPAQueryFactory queryFactory = new JPAQueryFactory(getEntityManager());
         JPAQuery<BookingResponse> query = getBookingQuery(queryFactory)
                 .where(whereExpression(mbNo));
 
@@ -108,12 +104,11 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public List<DailyBookingResponse> findBookingsByDate(Long meetingRoomNo, LocalDate date){
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
-        return query
+        return queryFactory
                 .select(new QDailyBookingResponse(
                         qBooking.bookingNo.as("no"),
                         qBooking.mbNo,
@@ -133,9 +128,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public boolean existsRoomNoAndDate(Long meetingRoomNo, LocalDateTime date) {
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        Long exist = query.select(qBooking.count())
+        Long exist = queryFactory.select(qBooking.count())
                 .from(qBooking)
                 .where(qBooking.meetingRoomNo.eq(meetingRoomNo),
                         qBooking.bookingDate.lt(date.plusHours(1)),
@@ -148,9 +142,8 @@ public class CustomBookingRepositoryImpl extends QuerydslRepositorySupport imple
 
     @Override
     public boolean hasBookingStartingAt(Long meetingRoomNo, LocalDateTime date) {
-        JPAQueryFactory query = new JPAQueryFactory(getEntityManager());
 
-        Long exist = query.select(qBooking.count())
+        Long exist = queryFactory.select(qBooking.count())
                 .from(qBooking)
                 .where(qBooking.meetingRoomNo.eq(meetingRoomNo), qBooking.bookingDate.eq(date))
                 .fetchOne();

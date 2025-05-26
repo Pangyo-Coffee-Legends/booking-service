@@ -1,5 +1,6 @@
 package com.nhnacademy.bookingservice.repository.impl;
 
+import com.nhnacademy.bookingservice.common.config.QuerydslConfig;
 import com.nhnacademy.bookingservice.dto.BookingResponse;
 import com.nhnacademy.bookingservice.dto.DailyBookingResponse;
 import com.nhnacademy.bookingservice.domain.Booking;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,8 +35,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ActiveProfiles("test")
+@Import(QuerydslConfig.class)
 @DataJpaTest
 class BookingRepositoryImplTest {
 
