@@ -175,7 +175,7 @@ class BookingIntegrationTest {
     @DisplayName("예약 조회 실패 - 찾을 수 없음")
     void getBooking_fail_notfound() throws Exception {
         mockMvc.perform(
-                    get("/api/v1/bookings/{no}", 7L)
+                    get("/api/v1/bookings/{no}", 6L)
                             .header("X-USER", "test@test.com")
                 )
                 .andExpect(status().isNotFound())
