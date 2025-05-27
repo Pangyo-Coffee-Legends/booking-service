@@ -45,6 +45,8 @@ ALTER TABLE bookings
 	ADD CONSTRAINT fk_bookings_rooms FOREIGN KEY (meeting_room_no) REFERENCES meeting_rooms(meeting_room_no),
 	ADD CONSTRAINT fk_bookings_changes FOREIGN KEY (change_no) REFERENCES booking_changes(change_no);
 
+ALTER TABLE booking_changes AUTO_INCREMENT = 1;
+
 INSERT INTO booking_changes(change_name) VALUES
                                              ('연장'),
                                              ('종료'),

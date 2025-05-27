@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 
-@Profile("dev")
+@Profile("test")
 @Component
 @RequiredArgsConstructor
 public class ApplicationStartListener implements ApplicationListener<ApplicationReadyEvent> {
