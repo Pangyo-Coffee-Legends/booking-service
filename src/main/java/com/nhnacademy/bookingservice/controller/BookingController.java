@@ -203,7 +203,7 @@ public class BookingController {
         return ResponseEntity
                 .ok(new EntryResponse(
                         HttpStatus.OK.value(),
-                        "입실이 완료되었습니다.",
+                        "입실이 완료되었습니다. 회의실 사용 화면으로 이동합니다.",
                         entryRequest.getEntryTime(),
                         entryRequest.getBookingNo()
                 ));
