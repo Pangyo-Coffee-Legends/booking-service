@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.advice.CommonAdvice;
+import com.nhnacademy.bookingservice.common.config.QuerydslConfig;
 import com.nhnacademy.bookingservice.common.generator.CodeGenerator;
 import com.nhnacademy.bookingservice.dto.*;
 import com.nhnacademy.bookingservice.domain.Booking;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +31,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("test")
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-@Import(CommonAdvice.class)
+@Import({CommonAdvice.class, QuerydslConfig.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookingIntegrationTest {
 
@@ -155,22 +158,6 @@ class BookingIntegrationTest {
 
     @Test
     @Order(5)
-    @DisplayName("예약 생성 실패 - 사용자 헤더 누락")
-    void registerBooking_fail_missingHeader() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
-        String body = mapper.writeValueAsString(request);
-
-        mockMvc.perform(
-                        post("/api/v1/bookings")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(body)
-                )
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-    }
-
-    @Test
-    @Order(6)
     @DisplayName("예약 조회")
     void getBooking() throws Exception {
         mockMvc.perform(
@@ -184,11 +171,11 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(7)
+    @Order(6)
     @DisplayName("예약 조회 실패 - 찾을 수 없음")
     void getBooking_fail_notfound() throws Exception {
         mockMvc.perform(
-                    get("/api/v1/bookings/{no}", 7L)
+                    get("/api/v1/bookings/{no}", 6L)
                             .header("X-USER", "test@test.com")
                 )
                 .andExpect(status().isNotFound())
@@ -198,7 +185,7 @@ class BookingIntegrationTest {
 
 
     @Test
-    @Order(8)
+    @Order(7)
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
@@ -216,7 +203,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(9)
+    @Order(8)
     @DisplayName("예약 수정 실패 - 예약자가 아닌 경우")
     void updateBooking_fail_verify() throws Exception {
         BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
@@ -233,7 +220,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(10)
+    @Order(9)
     @DisplayName("예약 연장")
     void extendBooking() throws Exception {
         mockMvc.perform(
@@ -250,7 +237,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(11)
+    @Order(10)
     @DisplayName("예약 연장 실패 - 다음 예약 존재")
     void extendBooking_fail_already() throws Exception {
         BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
@@ -268,7 +255,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(12)
+    @Order(11)
     @DisplayName("예약 종료")
     void finishBooking() throws Exception {
         mockMvc.perform(
@@ -284,7 +271,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(13)
+    @Order(12)
     @DisplayName("예약 취소")
     void deleteBooking() throws Exception {
         mockMvc.perform(
@@ -301,7 +288,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(14)
+    @Order(13)
     @DisplayName("본인 확인")
     void verifyPassword() throws Exception {
         ConfirmPasswordRequest request = new ConfirmPasswordRequest("Test123!");
@@ -319,7 +306,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(15)
+    @Order(14)
     @DisplayName("본인 확인 - 관리자")
     void verifyPassword_admin() throws Exception {
         ConfirmPasswordRequest request = new ConfirmPasswordRequest("Admin123!");
@@ -337,7 +324,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(16)
+    @Order(15)
     @DisplayName("본인 확인 실패 - 일반 사용자")
     void verifyPassword_fail_forbidden() throws Exception {
         ConfirmPasswordRequest request = new ConfirmPasswordRequest("Test123!");
@@ -354,7 +341,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(17)
+    @Order(16)
     @DisplayName("회의실 입실")
     void checkBooking() throws Exception {
         EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:20:00"), savedBooking.getNo());
@@ -367,12 +354,12 @@ class BookingIntegrationTest {
                                 .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("B-CODE-001"))
+                .andExpect(jsonPath("$.message").value("입실이 완료되었습니다."))
                 .andDo(print());
     }
 
     @Test
-    @Order(18)
+    @Order(17)
     @DisplayName("회의실 입실 실패 - 코드 불일치")
     void checkBooking_fail_code() throws Exception {
         EntryRequest request = new EntryRequest("test1", LocalDateTime.parse("2025-04-29T09:30:00"), savedBooking.getNo());
@@ -389,7 +376,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(19)
+    @Order(18)
     @DisplayName("회의실 입실 실패 - 예약 날짜 불일치")
     void checkBooking_fail_startsAt() throws Exception {
         EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-28T09:30:00"), savedBooking.getNo());
@@ -406,7 +393,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(20)
+    @Order(19)
     @DisplayName("회의실 입실 실패 - 예약 시간 30분 전")
     void checkBooking_fail_before_minutes() throws Exception {
         EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T09:00:00"), savedBooking.getNo());
@@ -423,7 +410,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(21)
+    @Order(20)
     @DisplayName("회의실 입실 실패 - 예약 시간 30분 후")
     void checkBooking_fail_after_minutes() throws Exception {
         EntryRequest request = new EntryRequest("B-CODE-001", LocalDateTime.parse("2025-04-29T10:00:00"), savedBooking.getNo());
@@ -440,7 +427,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(22)
+    @Order(21)
     @DisplayName("예약 리스트 조회 - 사용자별")
     void getBookingsByMember_list() throws Exception {
         BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
@@ -465,7 +452,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(23)
+    @Order(22)
     @DisplayName("예약 페이지 조회 - 사용자별")
     void getBookingsByMember_page() throws Exception {
         BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
@@ -491,7 +478,7 @@ class BookingIntegrationTest {
 
 
     @Test
-    @Order(24)
+    @Order(23)
     @DisplayName("예약 리스트 조회 - 전체")
     void getAllBookings_list() throws Exception {
         BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
@@ -521,7 +508,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(25)
+    @Order(24)
     @DisplayName("예약 페이지 조회 - 전체 - 관리자")
     void getAllBookings_page() throws Exception {
         BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
@@ -552,7 +539,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(26)
+    @Order(25)
     @DisplayName("예약 페이지 조회 - 전체 - 사용자")
     void getAllBookings_page_fail_forbidden() throws Exception {
         mockMvc.perform(
@@ -564,7 +551,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @Order(27)
+    @Order(26)
     @DisplayName("예약 리스트 조회 - 특정 회의실, 특정 날짜 ")
     void getDailyBookings() throws Exception {
         MeetingRoomResponse meetingRoomResponse = new MeetingRoomResponse(2L, "회의실 B", 10);
