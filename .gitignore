@@ -41,3 +41,6 @@ build/
 ### properties ###
 *.properties
 /logs
+
+### ApplicationListener ###
+ApplicationListener.java
