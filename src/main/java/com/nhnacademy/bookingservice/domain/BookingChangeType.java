@@ -28,7 +28,12 @@ public enum BookingChangeType {
     /**
      * 예약 정보 변경
      */
-    CHANGE(4L, "변경");
+    CHANGE(4L, "변경"),
+
+    /**
+     * 입실 후 사용 중
+     */
+    INUSE(5L, "사용중");
 
     private final Long id;
     private final String name;

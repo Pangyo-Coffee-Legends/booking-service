@@ -263,12 +263,13 @@ public class BookingServiceImpl implements BookingService{
     @Override
     public boolean checkBooking(MemberResponse memberInfo, String code, LocalDateTime entryTime, Long bookingNo) {
         // 저장된 예약정보 찾아오기
+        Booking booking = bookingRepository.findBookingByBookingNo(bookingNo).getFirst();
         BookingResponse bookingResponse = bookingRepository.findByNo(bookingNo).orElseThrow(() -> new BookingNotFoundException(bookingNo));
 
         if(!bookingResponse.getMember().getNo().equals(memberInfo.getNo())) {
             throw new BookingInfoDoesNotMatchException();
         }
-        
+
         // 저장된 예약정보 내 예약코드
         String bookingCode = bookingResponse.getCode();
 
@@ -288,6 +289,11 @@ public class BookingServiceImpl implements BookingService{
 
         if (bookingCode.equals(code) && bookingDateStr.equals(entryDateStr)) {
             if (Math.abs(minutes) <= 10) { // 예약 시간과 입실 시간 차이 절댓값 10 이하
+                BookingChange inUse = bookingChangeRepository.findById(BookingChangeType.INUSE.getId())
+                        .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.INUSE.getId()));
+
+                booking.updateBookingEvent(inUse);
+
                 return true;
             } else if (minutes < -10) {
                 throw new BookingTimeNotReachedException();
