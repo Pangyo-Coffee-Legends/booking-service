@@ -443,8 +443,8 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 조회 - 회의실 날짜별")
     void getDailyBookings() throws Exception {
-        DailyBookingResponse response1 = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
-        DailyBookingResponse response2 = new DailyBookingResponse(2L, 1L, 8, LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"));
+        DailyBookingResponse response1 = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"), null);
+        DailyBookingResponse response2 = new DailyBookingResponse(2L, 1L, 8, LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T11:30:00"), null);
 
         when(bookingService.getDailyBookings(2L, LocalDate.parse("2025-04-29"))).thenReturn(List.of(response1, response2));
 

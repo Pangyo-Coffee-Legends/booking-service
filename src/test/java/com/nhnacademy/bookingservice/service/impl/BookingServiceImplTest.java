@@ -274,7 +274,7 @@ class BookingServiceImplTest {
     @DisplayName("예약 날짜별 조회")
     void getDailyBookings() {
 
-        DailyBookingResponse response = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"));
+        DailyBookingResponse response = new DailyBookingResponse(1L, 1L, 8, LocalDateTime.parse("2025-04-29T09:30:00"), LocalDateTime.parse("2025-04-29T10:30:00"), null);
         when(bookingRepository.findBookingsByDate(Mockito.anyLong(), Mockito.any())).thenReturn(List.of(response));
 
         List<DailyBookingResponse> responseList =  bookingService.getDailyBookings(1L, LocalDate.parse("2025-04-29"));
@@ -471,7 +471,7 @@ class BookingServiceImplTest {
         Integer attendeeCount = 8;
         LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
-        Long roomNo = 1L;
+        Long bookingNo = 1L;
 
         BookingResponse response = new BookingResponse(
                 no,
@@ -482,53 +482,71 @@ class BookingServiceImplTest {
                 LocalDateTime.now(),
                 null,
                 mbNo,
-                roomNo
+                bookingNo
         );
 
+        Booking booking = Booking.ofNewBooking(code, date, attendeeCount, finishesAt, mbNo, null, 1L);
+        ReflectionTestUtils.setField(booking, "bookingNo", bookingNo);
+
+        BookingChange bookingChange = new BookingChange("사용중");
+        ReflectionTestUtils.setField(bookingChange, "no", BookingChangeType.INUSE.getId());
+
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(response));
+        when(bookingRepository.findBookingByBookingNo(Mockito.anyLong())).thenReturn(Optional.of(booking));
+        when(bookingChangeRepository.findById(BookingChangeType.INUSE.getId())).thenReturn(Optional.of(bookingChange));
 
         // when
-        boolean result = bookingService.checkBooking(memberInfo, code, LocalDateTime.parse("2025-04-29T09:20:00"), roomNo);
+        boolean result = bookingService.checkBooking(memberInfo, code, LocalDateTime.parse("2025-04-29T09:20:00"), bookingNo);
 
         // then
         Assertions.assertTrue(result);
     }
 
     @Test
-    @DisplayName("예약 코드 불일치 시 BookingCodeDoesNotMatchException 발생")
+    @DisplayName("예약 코드 불일치 시 BookingInfoDoesNotMatchException 발생")
     void checkBookingCodeFailed() {
         // given
         Long no = 1L;
-        String code = "testCode";
+        String correctCode = "testCode";
+        String wrongCode = "wrongCode";
         LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
         LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
+        // 예약자 정보 설정
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(mbNo);
+
+        // room 정보 설정 (optional, but safe)
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(roomNo);
+
         BookingResponse response = new BookingResponse(
                 no,
-                code,
+                correctCode,
                 date,
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
                 null,
-                mbNo,
-                roomNo
+                member,
+                room
         );
 
+        // mock 반환값 지정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
+                Booking.ofNewBooking(correctCode, date, attendeeCount, finishesAt, mbNo, null, roomNo)
+        ));
 
         // when
-        // 불일치하는 예약코드 제공
-        String wrongCode = "wrongCode";
-        // 입실 5분 전으로 설정
         LocalDateTime entryTime = date.minusMinutes(5);
 
         // then
         Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(memberInfo, wrongCode, entryTime, roomNo)
+                bookingService.checkBooking(memberInfo, wrongCode, entryTime, no)
         );
     }
 
@@ -544,6 +562,14 @@ class BookingServiceImplTest {
         Long mbNo = 1L;
         Long roomNo = 1L;
 
+        // 예약자 정보 설정
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(mbNo);
+
+        // room 정보 설정
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(roomNo);
+
         BookingResponse response = new BookingResponse(
                 no,
                 code,
@@ -552,18 +578,22 @@ class BookingServiceImplTest {
                 finishesAt,
                 LocalDateTime.now(),
                 null,
-                mbNo,
-                roomNo
+                member,
+                room
         );
 
+        // mock 반환값 지정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
+                Booking.ofNewBooking(code, date, attendeeCount, finishesAt, mbNo, null, roomNo)
+        ));
 
         // when
         LocalDateTime differentDateEntry = LocalDateTime.parse("2025-04-30T09:30:00");
 
         // then
         Assertions.assertThrows(BookingInfoDoesNotMatchException.class, () ->
-                bookingService.checkBooking(memberInfo, code, differentDateEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, differentDateEntry, no)
         );
     }
 
@@ -573,32 +603,43 @@ class BookingServiceImplTest {
         // given
         Long no = 1L;
         String code = "testCode";
-        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        LocalDateTime startTime = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
         LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
+        // member 설정
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(mbNo);
+
+        // room 설정
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(roomNo);
+
         BookingResponse response = new BookingResponse(
                 no,
                 code,
-                date,
+                startTime,
                 attendeeCount,
                 finishesAt,
                 LocalDateTime.now(),
                 null,
-                mbNo,
-                roomNo
+                member,
+                room
         );
 
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
+                Booking.ofNewBooking(code, startTime, attendeeCount, finishesAt, mbNo, null, roomNo)
+        ));
 
         // when
-        // 예약 시간 15분 전 입실 시도
-        LocalDateTime earlyEntry = date.minusMinutes(15);
+        LocalDateTime earlyEntry = startTime.minusMinutes(15);
 
+        // then
         Assertions.assertThrows(BookingTimeNotReachedException.class, () ->
-                bookingService.checkBooking(memberInfo, code, earlyEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, earlyEntry, no)
         );
     }
 
@@ -608,32 +649,37 @@ class BookingServiceImplTest {
         // given
         Long no = 1L;
         String code = "testCode";
-        LocalDateTime date = LocalDateTime.parse("2025-04-29T09:30:00");
+        LocalDateTime startTime = LocalDateTime.parse("2025-04-29T09:30:00");
         Integer attendeeCount = 8;
         LocalDateTime finishesAt = LocalDateTime.parse("2025-04-29T10:30:00");
         Long mbNo = 1L;
         Long roomNo = 1L;
 
+        // member 설정
+        BookingResponse.MemberInfo member = new BookingResponse.MemberInfo();
+        member.setNo(mbNo);
+
+        // room 설정
+        BookingResponse.MeetingRoomInfo room = new BookingResponse.MeetingRoomInfo();
+        room.setNo(roomNo);
+
+        // BookingResponse 구성
         BookingResponse response = new BookingResponse(
-                no,
-                code,
-                date,
-                attendeeCount,
-                finishesAt,
-                LocalDateTime.now(),
-                null,
-                mbNo,
-                roomNo
+                no, code, startTime, attendeeCount, finishesAt, LocalDateTime.now(), null, member, room
         );
 
+        // mock 설정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
+                Booking.ofNewBooking(code, startTime, attendeeCount, finishesAt, mbNo, null, roomNo)
+        ));
 
-        // when
-        // 예약 시간 15분 이후 입실 시도
-        LocalDateTime lateEntry = date.plusMinutes(15);
+        // when - 15분 늦게 입실
+        LocalDateTime lateEntry = startTime.plusMinutes(15);
 
+        // then - 예외 발생 기대
         Assertions.assertThrows(BookingTimeHasPassedException.class, () ->
-                bookingService.checkBooking(memberInfo, code, lateEntry, roomNo)
+                bookingService.checkBooking(memberInfo, code, lateEntry, no)
         );
     }
 
