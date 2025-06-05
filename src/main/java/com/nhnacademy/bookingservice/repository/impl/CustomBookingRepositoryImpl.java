@@ -114,7 +114,8 @@ public class CustomBookingRepositoryImpl implements CustomBookingRepository {
                         qBooking.mbNo,
                         qBooking.attendeeCount,
                         qBooking.bookingDate.as("startsAt"),
-                        qBooking.finishesAt
+                        qBooking.finishesAt,
+                        qBookingChange.name
                         )
                 )
                 .from(qBooking)
