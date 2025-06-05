@@ -492,7 +492,7 @@ class BookingServiceImplTest {
         ReflectionTestUtils.setField(bookingChange, "no", BookingChangeType.INUSE.getId());
 
         when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(response));
-        when(bookingRepository.findBookingByBookingNo(Mockito.anyLong())).thenReturn(List.of(booking));
+        when(bookingRepository.findBookingByBookingNo(Mockito.anyLong())).thenReturn(Optional.of(booking));
         when(bookingChangeRepository.findById(BookingChangeType.INUSE.getId())).thenReturn(Optional.of(bookingChange));
 
         // when
@@ -537,7 +537,7 @@ class BookingServiceImplTest {
 
         // mock 반환값 지정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
-        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(List.of(
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
                 Booking.ofNewBooking(correctCode, date, attendeeCount, finishesAt, mbNo, null, roomNo)
         ));
 
@@ -584,7 +584,7 @@ class BookingServiceImplTest {
 
         // mock 반환값 지정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
-        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(List.of(
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
                 Booking.ofNewBooking(code, date, attendeeCount, finishesAt, mbNo, null, roomNo)
         ));
 
@@ -630,7 +630,7 @@ class BookingServiceImplTest {
         );
 
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
-        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(List.of(
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
                 Booking.ofNewBooking(code, startTime, attendeeCount, finishesAt, mbNo, null, roomNo)
         ));
 
@@ -670,7 +670,7 @@ class BookingServiceImplTest {
 
         // mock 설정
         when(bookingRepository.findByNo(no)).thenReturn(Optional.of(response));
-        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(List.of(
+        when(bookingRepository.findBookingByBookingNo(no)).thenReturn(Optional.of(
                 Booking.ofNewBooking(code, startTime, attendeeCount, finishesAt, mbNo, null, roomNo)
         ));
 

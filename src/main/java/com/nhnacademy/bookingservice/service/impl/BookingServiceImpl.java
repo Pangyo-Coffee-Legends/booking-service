@@ -263,7 +263,7 @@ public class BookingServiceImpl implements BookingService{
     @Override
     public boolean checkBooking(MemberResponse memberInfo, String code, LocalDateTime entryTime, Long bookingNo) {
         // 저장된 예약정보 찾아오기
-        Booking booking = bookingRepository.findBookingByBookingNo(bookingNo).getFirst();
+        Booking booking = bookingRepository.findBookingByBookingNo(bookingNo).orElseThrow(() -> new BookingNotFoundException(bookingNo));
         BookingResponse bookingResponse = bookingRepository.findByNo(bookingNo).orElseThrow(() -> new BookingNotFoundException(bookingNo));
 
         if(!bookingResponse.getMember().getNo().equals(memberInfo.getNo())) {
