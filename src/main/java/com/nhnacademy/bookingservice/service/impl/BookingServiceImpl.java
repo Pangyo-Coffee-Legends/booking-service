@@ -61,14 +61,21 @@ public class BookingServiceImpl implements BookingService{
         String code = codeGenerator.generateCode();
 
         LocalDate date = LocalDate.parse(request.getDate());
-        LocalTime time = LocalTime.parse(request.getTime());
-        LocalDateTime dateTime = LocalDateTime.of(date, time);
+        LocalTime startTime = LocalTime.parse(request.getStartTime());
+        LocalTime finishTime = startTime.plusHours(1);
 
-        if(bookingRepository.existsRoomNoAndDate(request.getRoomNo(), dateTime)) {
-            throw new AlreadyMeetingRoomTimeException(dateTime);
+        if(request.getFinishTime() != null) {
+            finishTime = LocalTime.parse(request.getFinishTime());
         }
 
-        Booking booking = Booking.ofNewBooking(code, dateTime, request.getAttendeeCount(), dateTime.plusHours(1), memberInfo.getNo(), null, request.getRoomNo());
+        LocalDateTime startDateTime = LocalDateTime.of(date, startTime);
+        LocalDateTime finishDateTime = LocalDateTime.of(date, finishTime);
+
+        if(bookingRepository.existsOverlappingBooking(request.getRoomNo(), startDateTime, finishDateTime)) {
+            throw new AlreadyMeetingRoomTimeException(startDateTime);
+        }
+
+        Booking booking = Booking.ofNewBooking(code, startDateTime, request.getAttendeeCount(), finishDateTime, memberInfo.getNo(), null, request.getRoomNo());
         bookingRepository.save(booking);
 
         publisher.publishEvent(new BookingCreatedEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
@@ -196,7 +203,7 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(no)
                 .orElseThrow(() -> new BookingNotFoundException(no));
 
-        if(bookingRepository.existsRoomNoAndDate(booking.getMeetingRoomNo(), booking.getFinishesAt())){
+        if(bookingRepository.existsOverlappingBooking(booking.getMeetingRoomNo(), booking.getFinishesAt(), booking.getFinishesAt().plusHours(1))){
             throw new AlreadyMeetingRoomTimeException();
         }
 
@@ -204,7 +211,7 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.EXTEND.getId()));
 
         booking.updateBookingEvent(change);
-        booking.updateFinishesAt(booking.getFinishesAt().plusMinutes(30));
+        booking.updateFinishesAt(booking.getFinishesAt().plusHours(1));
 
     }
 
