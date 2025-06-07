@@ -18,8 +18,10 @@ public class BookingRegisterRequest {
     @NotBlank(message = "예약 날짜는 비어 있을 수 없습니다.")
     private String date;
 
-    @NotBlank(message = "예약 시간은 비어 있을 수 없습니다.")
-    private String time;
+    @NotBlank(message = "시작 시간은 비어 있을 수 없습니다.")
+    private String startTime;
+
+    private String finishTime;
 
     @NotNull(message = "참석 인원 수는 필수입니다.")
     private Integer attendeeCount;

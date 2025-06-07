@@ -128,13 +128,13 @@ public class CustomBookingRepositoryImpl implements CustomBookingRepository {
     }
 
     @Override
-    public boolean existsRoomNoAndDate(Long meetingRoomNo, LocalDateTime date) {
+    public boolean existsOverlappingBooking(Long meetingRoomNo, LocalDateTime startsAt, LocalDateTime finishesAt) {
 
         Long exist = queryFactory.select(qBooking.count())
                 .from(qBooking)
                 .where(qBooking.meetingRoomNo.eq(meetingRoomNo),
-                        qBooking.bookingDate.lt(date.plusHours(1)),
-                        qBooking.finishesAt.gt(date)
+                        qBooking.bookingDate.lt(finishesAt),
+                        qBooking.finishesAt.gt(startsAt)
                 )
                 .fetchOne();
 

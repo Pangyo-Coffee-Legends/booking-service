@@ -62,7 +62,7 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 성공")
     void registerBooking() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30",8);
         String body = mapper.writeValueAsString(request);
 
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
@@ -82,7 +82,7 @@ class BookingControllerTest {
     @Test
     @DisplayName("예약 실패 - 중복")
     void registerBooking_exception_case1() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "11:30", 8);
         String body = mapper.writeValueAsString(request);
         doThrow(new AlreadyMeetingRoomTimeException()).when(bookingService).register(request, member);
         mockMvc.perform(
@@ -99,9 +99,9 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 실패 - bad request")
+    @DisplayName("예약 실패 - 회의실 인원 초과")
     void registerBooking_exception_case2() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30",8);
         String body = mapper.writeValueAsString(request);
         doThrow(new MeetingRoomCapacityExceededException(8)).when(bookingService).register(request, member);
         mockMvc.perform(
@@ -116,9 +116,9 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("예약 실패 - 헤더가 있는 경우")
+    @DisplayName("예약 실패 - 찾을 수 없는 회원일 경우(회원 정보가 없는 경우)")
     void registerBooking_exception_case4() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         String body = mapper.writeValueAsString(request);
         BookingRegisterResponse response = new BookingRegisterResponse(1L);
         doThrow((new NotFoundException())).when(memberAdaptor).getMemberByEmail("test@test.com");
