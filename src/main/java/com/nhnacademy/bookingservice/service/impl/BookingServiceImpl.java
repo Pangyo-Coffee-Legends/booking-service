@@ -62,11 +62,7 @@ public class BookingServiceImpl implements BookingService{
 
         LocalDate date = LocalDate.parse(request.getDate());
         LocalTime startTime = LocalTime.parse(request.getStartTime());
-        LocalTime finishTime = startTime.plusHours(1);
-
-        if(request.getFinishTime() != null) {
-            finishTime = LocalTime.parse(request.getFinishTime());
-        }
+        LocalTime finishTime = request.getFinishTime() != null? LocalTime.parse(request.getFinishTime()) : startTime.plusHours(1);
 
         LocalDateTime startDateTime = LocalDateTime.of(date, startTime);
         LocalDateTime finishDateTime = LocalDateTime.of(date, finishTime);
