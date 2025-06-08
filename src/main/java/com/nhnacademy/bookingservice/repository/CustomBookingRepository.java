@@ -62,6 +62,8 @@ public interface CustomBookingRepository {
      */
     List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date);
 
+    List<BookingResponse> findBookingsToRemind(LocalDateTime date);
+
     /**
      * 주어진 시각에 해당 회의실에 겹치는 예약이 존재하는지 확인합니다.
      * 예약 시작 시각과 종료 시각을 기준으로, 전달된 시각(date)이 이 사이에 포함되는 경우 예약이 존재한다고 판단합니다.
