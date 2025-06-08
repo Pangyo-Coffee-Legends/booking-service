@@ -3,6 +3,7 @@ package com.nhnacademy.bookingservice.service.impl;
 import com.nhnacademy.bookingservice.common.adaptor.MeetingRoomAdaptor;
 import com.nhnacademy.bookingservice.common.adaptor.MemberAdaptor;
 import com.nhnacademy.bookingservice.common.event.BookingCancelEvent;
+import com.nhnacademy.bookingservice.common.event.BookingChangeEvent;
 import com.nhnacademy.bookingservice.common.event.BookingCreatedEvent;
 import com.nhnacademy.bookingservice.common.exception.BadRequestException;
 import com.nhnacademy.bookingservice.common.exception.ForbiddenException;
@@ -191,6 +192,7 @@ public class BookingServiceImpl implements BookingService{
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CHANGE.getId()));
         booking.updateBookingEvent(change);
 
+        publisher.publishEvent(new BookingChangeEvent(this, memberInfo.getEmail(), booking.getBookingNo()));
         return convertBookingResponse(booking, memberInfo.getName(), room.getMeetingRoomName());
     }
 
