@@ -20,6 +20,7 @@ public class BookingEmailEventListener {
     private final NotifyAdaptor notifyAdaptor;
     private final MeetingRoomAdaptor meetingRoomAdaptor;
     private final BookingRepository bookingRepository;
+    private static final String ROLE_TYPE = "ROLE_ADMIN";
 
     @Async
     @TransactionalEventListener(classes = BookingCreatedEvent.class, phase = TransactionPhase.AFTER_COMMIT)
@@ -65,7 +66,8 @@ public class BookingEmailEventListener {
                                 event.getEmail(),
                                 booking.getCode(),
                                 booking.getRoom().getName(),
-                                booking.getStartsAt().toString().replace("T", " "))
+                                booking.getStartsAt().toString().replace("T", " ")),
+                ROLE_TYPE
         );
 
         notifyAdaptor.sendHtmlEmail(request);
@@ -115,7 +117,8 @@ public class BookingEmailEventListener {
                         event.getEmail(),
                         booking.getCode(),
                         booking.getRoom().getName(),
-                        booking.getStartsAt().toString().replace("T", " "))
+                        booking.getStartsAt().toString().replace("T", " ")),
+                ROLE_TYPE
         );
 
         notifyAdaptor.sendHtmlEmail(request);
@@ -156,7 +159,8 @@ public class BookingEmailEventListener {
                         event.getEmail(),
                         booking.getCode(),
                         booking.getRoom().getName(),
-                        booking.getStartsAt().toString().replace("T", " "))
+                        booking.getStartsAt().toString().replace("T", " ")),
+                ROLE_TYPE
         );
 
         notifyAdaptor.sendHtmlEmail(request);

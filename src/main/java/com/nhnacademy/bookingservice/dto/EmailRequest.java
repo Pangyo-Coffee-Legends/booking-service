@@ -16,4 +16,6 @@ public class EmailRequest {
     private String subject;
 
     private String content;
+
+    private String roleType;
 }
