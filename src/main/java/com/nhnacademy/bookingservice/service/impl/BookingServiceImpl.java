@@ -184,9 +184,14 @@ public class BookingServiceImpl implements BookingService{
         MeetingRoomResponse room = getMeetingRoom(request.getRoomNo());
 
         LocalDate date = LocalDate.parse(request.getDate());
-        LocalTime time = LocalTime.parse(request.getTime());
-        LocalDateTime dateTime = LocalDateTime.of(date, time);
-        booking.update(dateTime, request.getAttendeeCount(), dateTime.plusHours(1), room.getNo());
+        LocalTime startTime = LocalTime.parse(request.getStartTime());
+        LocalTime finishTime = request.getFinishTime() != null? LocalTime.parse(request.getFinishTime()) : startTime.plusHours(1);
+
+        LocalDateTime startDateTime = LocalDateTime.of(date, startTime);
+        LocalDateTime finishDateTime = LocalDateTime.of(date, finishTime);
+
+
+        booking.update(startDateTime, request.getAttendeeCount(), finishDateTime, room.getNo());
 
         BookingChange change = bookingChangeRepository.findById(BookingChangeType.CHANGE.getId())
                 .orElseThrow(() -> new BookingChangeNotFoundException(BookingChangeType.CHANGE.getId()));
