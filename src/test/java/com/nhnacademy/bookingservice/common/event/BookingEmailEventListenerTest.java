@@ -70,6 +70,24 @@ class BookingEmailEventListenerTest {
     }
 
     @Test
+    @DisplayName("이메일 발송 - 예약 수정")
+    void handleBookingChangeEvent() {
+        BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"), null, member, room);
+        MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
+
+        String email = "test@example.com";
+        Long bookingNo = 123L;
+        BookingChangeEvent event = new BookingChangeEvent(this, email, bookingNo);
+
+        when(bookingRepository.findByNo(Mockito.anyLong())).thenReturn(Optional.of(bookingResponse));
+        when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
+
+        listener.handleBookingChangeEvent(event);
+
+        verify(notifyAdaptor, Mockito.times(1)).sendHtmlEmail(Mockito.any(EmailRequest.class));
+    }
+
+    @Test
     @DisplayName("이메일 발송 - 예약 취소")
     void handleBookingCancelEvent() {
         BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T08:30:00"), LocalDateTime.parse("2025-04-29T09:30:00"),null, member, room);

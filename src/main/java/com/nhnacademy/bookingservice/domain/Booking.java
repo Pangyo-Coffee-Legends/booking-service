@@ -26,7 +26,7 @@ public class Booking {
     private String bookingCode;
 
     @Column(name = "booking_date", nullable = false)
-    @Comment("에약일시")
+    @Comment("예약일시")
     private LocalDateTime bookingDate;
 
     @Column(name = "attendee_count", nullable = false)

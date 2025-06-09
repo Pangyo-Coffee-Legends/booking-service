@@ -269,10 +269,10 @@ class BookingRepositoryImplTest {
     @ParameterizedTest
     @MethodSource("provideBookingAndDate")
     @DisplayName("예약 중복 체크 - 겹치는 시간에 예약하는 경우")
-    void existsRoomNoAndDate_true(Booking booking, LocalDateTime targetDate) {
+    void existsOverlappingBooking_true(Booking booking, LocalDateTime targetStartDate, LocalDateTime targetFinishDate) {
         manager.persistAndFlush(booking);
 
-        boolean actual = bookingRepository.existsRoomNoAndDate(2L, targetDate);
+        boolean actual = bookingRepository.existsOverlappingBooking(2L, targetStartDate, targetFinishDate);
 
         assertTrue(actual);
     }
@@ -301,11 +301,11 @@ class BookingRepositoryImplTest {
 
     @Test
     @DisplayName("예약 중복 체크 - False")
-    void existsRoomNoAndDate_false() {
+    void existsOverlappingBooking_false() {
         Booking booking = Booking.ofNewBooking("test3", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 2L);
         manager.persistAndFlush(booking);
 
-        boolean actual = bookingRepository.existsRoomNoAndDate(2L, LocalDateTime.parse("2025-04-29T10:30:00"));
+        boolean actual = bookingRepository.existsOverlappingBooking(2L, LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T12:30:00"));
 
         assertFalse(actual);
     }
