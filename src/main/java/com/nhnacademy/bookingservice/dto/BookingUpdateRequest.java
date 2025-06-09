@@ -11,7 +11,9 @@ public class BookingUpdateRequest {
 
     String date;
 
-    String time;
+    String startTime;
+
+    String finishTime;
 
     Integer attendeeCount;
 
