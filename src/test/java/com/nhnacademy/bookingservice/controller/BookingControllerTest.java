@@ -474,7 +474,7 @@ class BookingControllerTest {
         room.setNo(1L);
         room.setName("회의실 A");
 
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 9, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "09:30", "10:30", 9);
         BookingResponse bookingResponse = new BookingResponse(1L, "test", LocalDateTime.parse("2025-04-29T09:30:00"), 9,LocalDateTime.parse("2025-04-29T10:30:00"), LocalDateTime.parse("2025-04-29T08:30:00"),"변경", member1, room);
 
         when(bookingService.updateBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(bookingResponse);

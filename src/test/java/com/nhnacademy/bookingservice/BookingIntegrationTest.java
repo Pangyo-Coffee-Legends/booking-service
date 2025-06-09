@@ -188,7 +188,7 @@ class BookingIntegrationTest {
     @Order(7)
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -206,7 +206,7 @@ class BookingIntegrationTest {
     @Order(8)
     @DisplayName("예약 수정 실패 - 예약자가 아닌 경우")
     void updateBooking_fail_verify() throws Exception {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(

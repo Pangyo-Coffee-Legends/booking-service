@@ -288,7 +288,7 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정")
     void updateBooking() {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "11:30", "12:30", 10);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
@@ -310,7 +310,7 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정 - not found")
     void updateBooking_exception_case1() {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "11:30", "12:30", 10);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
