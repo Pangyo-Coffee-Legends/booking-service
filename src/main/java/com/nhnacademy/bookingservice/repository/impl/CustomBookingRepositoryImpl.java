@@ -127,14 +127,27 @@ public class CustomBookingRepositoryImpl implements CustomBookingRepository {
                 .fetch();
     }
 
+    public List<BookingResponse> findBookingsToRemind(LocalDateTime date){
+
+        return getBookingQuery(queryFactory)
+                .where(
+                        qBooking.bookingDate.between(date, date.plusMinutes(1)),
+                        qBooking.bookingChange.isNull()
+                                .or(qBooking.bookingChange.no.notIn(
+                                        BookingChangeType.CANCEL.getId()
+                                ))
+                )
+                .fetch();
+    }
+
     @Override
-    public boolean existsRoomNoAndDate(Long meetingRoomNo, LocalDateTime date) {
+    public boolean existsOverlappingBooking(Long meetingRoomNo, LocalDateTime startsAt, LocalDateTime finishesAt) {
 
         Long exist = queryFactory.select(qBooking.count())
                 .from(qBooking)
                 .where(qBooking.meetingRoomNo.eq(meetingRoomNo),
-                        qBooking.bookingDate.lt(date.plusHours(1)),
-                        qBooking.finishesAt.gt(date)
+                        qBooking.bookingDate.lt(finishesAt),
+                        qBooking.finishesAt.gt(startsAt)
                 )
                 .fetchOne();
 

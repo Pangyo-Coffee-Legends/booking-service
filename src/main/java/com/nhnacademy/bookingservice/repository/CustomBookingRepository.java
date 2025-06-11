@@ -62,15 +62,18 @@ public interface CustomBookingRepository {
      */
     List<DailyBookingResponse> findBookingsByDate(Long roomNo, LocalDate date);
 
+    List<BookingResponse> findBookingsToRemind(LocalDateTime date);
+
     /**
      * 주어진 시각에 해당 회의실에 겹치는 예약이 존재하는지 확인합니다.
      * 예약 시작 시각과 종료 시각을 기준으로, 전달된 시각(date)이 이 사이에 포함되는 경우 예약이 존재한다고 판단합니다.
      *
      * @param roomNo 회의실 번호
-     * @param date   예약 확인 기준 시각
+     * @param startsAt   예약 확인 기준 시작 시각
+     * @param finishesAt 예약 확인 기준 종료 시각
      * @return 겹치는 예약이 존재하면 true, 없으면 false
      */
-    boolean existsRoomNoAndDate(Long roomNo, LocalDateTime date);
+    boolean existsOverlappingBooking(Long roomNo, LocalDateTime startsAt, LocalDateTime finishesAt);
 
     /**
      * 주어진 시각에 해당 회의실에서 정확히 그 시각에 시작하는 예약이 존재하는지 확인합니다.

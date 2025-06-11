@@ -87,10 +87,10 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 생성 성공")
     void register_case1() {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 6);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 6);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
-        when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(false);
+        when(bookingRepository.existsOverlappingBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(false);
 
         bookingService.register(request, memberInfo);
 
@@ -103,7 +103,7 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 생성 실패 - 수용인원 초과")
     void register_exception_case1() {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
@@ -115,11 +115,11 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 생성 실패 - 예약 중복")
     void register_exception_case2() {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 5);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 5);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
-        when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
+        when(bookingRepository.existsOverlappingBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(true);
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
@@ -129,11 +129,11 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 생성 실패 - 예약 중복")
     void register_exception_case3() {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "10:00", 5);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "10:00", "12:00", 5);
         MeetingRoomResponse roomResponse = new MeetingRoomResponse(1L, "회의실 A", 6);
 
         when(meetingRoomAdaptor.getMeetingRoom(Mockito.anyLong())).thenReturn(roomResponse);
-        when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
+        when(bookingRepository.existsOverlappingBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(true);
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.register(request, memberInfo));
 
@@ -288,7 +288,7 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정")
     void updateBooking() {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "11:30", "12:30", 10);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
@@ -310,7 +310,7 @@ class BookingServiceImplTest {
     @Test
     @DisplayName("예약 수정 - not found")
     void updateBooking_exception_case1() {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "11:30", 10, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "11:30", "12:30", 10);
 
         Booking booking = Booking.ofNewBooking("test", LocalDateTime.parse("2025-04-29T09:30:00"), 8, LocalDateTime.parse("2025-04-29T10:30:00"), 1L, null, 1L);
         ReflectionTestUtils.setField(booking, "bookingNo", 1L);
@@ -351,12 +351,12 @@ class BookingServiceImplTest {
         ReflectionTestUtils.setField(bookingChange, "no", 1L);
 
         when(bookingRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(booking));
-        when(bookingRepository.existsRoomNoAndDate(Mockito.anyLong(), Mockito.any())).thenReturn(true);
+        when(bookingRepository.existsOverlappingBooking(Mockito.anyLong(), Mockito.any(), Mockito.any())).thenReturn(true);
 
         Assertions.assertThrows(AlreadyMeetingRoomTimeException.class, () -> bookingService.extendBooking(1L));
 
         Mockito.verify(bookingRepository, Mockito.times(1)).findById(Mockito.anyLong());
-        Mockito.verify(bookingRepository, Mockito.times(1)).existsRoomNoAndDate(Mockito.anyLong(), Mockito.any());
+        Mockito.verify(bookingRepository, Mockito.times(1)).existsOverlappingBooking(Mockito.anyLong(), Mockito.any(), Mockito.any());
     }
 
     @Test

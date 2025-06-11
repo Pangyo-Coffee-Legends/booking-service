@@ -1,6 +1,5 @@
 package com.nhnacademy.bookingservice.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -9,8 +8,7 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @SuppressWarnings("unused")
-public class EmailRequest {
-
+public class RemindRequest {
     private String to;
 
     private String subject;

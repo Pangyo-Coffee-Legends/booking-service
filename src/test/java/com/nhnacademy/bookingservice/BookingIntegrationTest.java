@@ -79,7 +79,7 @@ class BookingIntegrationTest {
         MeetingRoomResponse meetingRoomResponse = new MeetingRoomResponse(1L, "회의실 A", 10);
         when(meetingRoomAdaptor.getMeetingRoom(1L)).thenReturn(meetingRoomResponse);
 
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-001");
         savedBooking = bookingService.register(request, member);
     }
@@ -88,7 +88,7 @@ class BookingIntegrationTest {
     @Order(1)
     @DisplayName("예약 생성")
     void registerBooking() throws Exception {
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
         String body = mapper.writeValueAsString(request2);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
 
@@ -111,7 +111,7 @@ class BookingIntegrationTest {
     @Order(2)
     @DisplayName("예약 생성 실패 - 예약 요청 누락")
     void registerBooking_fail_badRequest() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", null, null);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", null, null, null);
         String body = mapper.writeValueAsString(request);
         mockMvc.perform(
                         post("/api/v1/bookings")
@@ -127,7 +127,7 @@ class BookingIntegrationTest {
     @Order(3)
     @DisplayName("예약 생성 실패 - 예약 중복")
     void registerBooking_fail_alreadyExist() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "11:30", 8);
         String body = mapper.writeValueAsString(request);
         mockMvc.perform(
                         post("/api/v1/bookings")
@@ -143,7 +143,7 @@ class BookingIntegrationTest {
     @Order(4)
     @DisplayName("예약 생성 실패 - 인원 초과")
     void registerBooking_fail_capacity() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", 11);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "09:30", "10:30", 11);
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -188,7 +188,7 @@ class BookingIntegrationTest {
     @Order(7)
     @DisplayName("예약 수정")
     void updateBooking() throws Exception {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -206,7 +206,7 @@ class BookingIntegrationTest {
     @Order(8)
     @DisplayName("예약 수정 실패 - 예약자가 아닌 경우")
     void updateBooking_fail_verify() throws Exception {
-        BookingUpdateRequest request = new BookingUpdateRequest("2025-04-29", "09:30", 8, 1L);
+        BookingUpdateRequest request = new BookingUpdateRequest(1L, "2025-04-29", "09:30", "10:30", 8);
         String body = mapper.writeValueAsString(request);
 
         mockMvc.perform(
@@ -240,7 +240,7 @@ class BookingIntegrationTest {
     @Order(10)
     @DisplayName("예약 연장 실패 - 다음 예약 존재")
     void extendBooking_fail_already() throws Exception {
-        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request = new BookingRegisterRequest(1L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request, member);
 
@@ -430,8 +430,8 @@ class BookingIntegrationTest {
     @Order(21)
     @DisplayName("예약 리스트 조회 - 사용자별")
     void getBookingsByMember_list() throws Exception {
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
-        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
+        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request2, member);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-003");
@@ -455,8 +455,8 @@ class BookingIntegrationTest {
     @Order(22)
     @DisplayName("예약 페이지 조회 - 사용자별")
     void getBookingsByMember_page() throws Exception {
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
-        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
+        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request2, member);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-003");
@@ -481,8 +481,8 @@ class BookingIntegrationTest {
     @Order(23)
     @DisplayName("예약 리스트 조회 - 전체")
     void getAllBookings_list() throws Exception {
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
-        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
+        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request2, admin);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-003");
@@ -511,8 +511,8 @@ class BookingIntegrationTest {
     @Order(24)
     @DisplayName("예약 페이지 조회 - 전체 - 관리자")
     void getAllBookings_page() throws Exception {
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
-        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
+        BookingRegisterRequest request3 = new BookingRegisterRequest(1L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request2, admin);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-003");
@@ -557,8 +557,8 @@ class BookingIntegrationTest {
         MeetingRoomResponse meetingRoomResponse = new MeetingRoomResponse(2L, "회의실 B", 10);
         when(meetingRoomAdaptor.getMeetingRoom(2L)).thenReturn(meetingRoomResponse);
 
-        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", 8);
-        BookingRegisterRequest request3 = new BookingRegisterRequest(2L, "2025-04-29", "10:30", 8);
+        BookingRegisterRequest request2 = new BookingRegisterRequest(1L, "2025-04-29", "11:30", "12:30", 8);
+        BookingRegisterRequest request3 = new BookingRegisterRequest(2L, "2025-04-29", "10:30", "11:30", 8);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-002");
         bookingService.register(request2, admin);
         when(codeGenerator.generateCode()).thenReturn("B-CODE-003");

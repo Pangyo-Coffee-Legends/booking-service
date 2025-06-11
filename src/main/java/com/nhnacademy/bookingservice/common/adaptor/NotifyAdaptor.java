@@ -1,6 +1,7 @@
 package com.nhnacademy.bookingservice.common.adaptor;
 
 import com.nhnacademy.bookingservice.dto.EmailRequest;
+import com.nhnacademy.bookingservice.dto.RemindRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -9,4 +10,7 @@ public interface NotifyAdaptor {
 
     @GetMapping("/html")
     String sendHtmlEmail(EmailRequest request);
+
+    @GetMapping("/text")
+    String sendRemindText(RemindRequest request);
 }
